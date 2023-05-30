@@ -1,0 +1,69 @@
+# trying to create my own haploNet from scratch
+
+library(pegas)
+
+
+vcfData <- read.vcfR("/home/rico/Downloads/inkensFiles/vcf/tcs_example.vcf")
+vcfData <- vcfR2DNAbin(vcfData, extract.indels = FALSE)
+
+haplotypes <- pegas::haplotype(vcfData, locus = 1:ncol(vcfData))
+
+
+loci <- read.loci("/home/rico/Downloads/inkensFiles/vcf/tcs_example.vcf")
+vcfLoci <- VCFloci("/home/rico/Downloads/inkensFiles/vcf/tcs_example.vcf")
+
+#creating haplonet
+# each row represents one edge in the network
+# first column is one end of the edge
+# second columns is the other one
+# third column is number of steps
+# fourth column is probability of a parsimonious link - i dont need... hopefully
+haplonet <- matrix(nrow = 2, ncol = 4)
+haplonet[1,1] <- 1
+haplonet[1,2] <- 2
+haplonet[1,3] <- 2
+haplonet[1,4] <- 1
+haplonet[2,1] <- 1
+haplonet[2,2] <- 3
+haplonet[2,3] <- 4
+haplonet[2,4] <- 1
+colnames(haplonet) <- c("","","step","")
+#dimnames(haplonet) <-list(NULL, c("","","step"))
+attr(haplonet, "labels") <- c('h1', 'h2', 'h3')
+class(haplonet) <- "haploNet"
+typeof(haplonet[1,1])
+typeof(haplonet[1,2])
+typeof(haplonet[1,3])
+typeof(haplonet[1,4])
+plot(haplonet)
+print.default(haplonet)
+
+
+# 
+# medianVecs <- matrix(nrow = 1, ncol = 4)
+# medianVecs[1,1] <- 1
+# medianVecs[1,2] <- 3
+# medianVecs[1,3] <- 3
+# medianVecs[1,4] <- 1
+# attr(haplonet, "alter.links") <- medianVecs
+# print.default(haplonet)
+mjn <- matrix(nrow = 4, ncol = 3)
+mjn[1,] <- c(1,2,1)
+mjn[2,] <- c(1,5,1)
+mjn[3,] <- c(2,3,1)
+mjn[4,] <- c(4,5,2)
+alter <- matrix(nrow = 1, ncol = 3,c(3,5,1))
+colnames(alter) <- c("","","step")
+attr(mjn, "alter.links") <- alter
+dimnames(mjn) <-list(NULL, c("","","step"))
+attr(mjn, "labels") <- c('h1', 'h2', 'h3', "h4", ' ')
+
+
+attr(mjn, "data") <- vcfData
+attr(mjn, "prefix") <- " "
+class(mjn) <- c("mjn", "haploNet")
+print.default(mjn )
+
+#plot(mjn)
+plot(mjn, shape = c("circles", "circles"), labels = TRUE, show.mutation = 2,cex = 0.5, col.link = c("red","green", "blue", "black","yellow"),legend = c(-6,1), threshold = c(1,10))#, scale.ratio = input$sliderScaleNetwork, treshold = c(1,10))
+
