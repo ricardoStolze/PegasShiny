@@ -413,28 +413,25 @@ server <- function(input, output, session) {
     class <- class(haplonet)
     haploTmp <- haplonet
     
-    #browser()
     text <- input$textRemoveNodes
     haplotypeStrings <- unlist(strsplit(text,"," ))
     
     for (i in attr(haplonet,"labels")){
-      #browser()
       if (! i %in% haplotypeStrings){
         
-        index <- match(i, attr(haplonet,"labels"))
-        linesToBeRemoved <- c(which(haplonet[,1] == index), which(haplonet[,2] == index))
+        index <- match(i, labels)
+        linesToBeRemoved <- c(which(haploTmp[,1] == index), which(haploTmp[,2] == index))
         if (length(linesToBeRemoved) > 0){
           haploTmp <- haploTmp[-linesToBeRemoved,]
-          
-          
-          x <- haploTmp[,1]
-          haploTmp[,1] <- sapply(x, function(x) if (x >= index) x <- x - 1 else x)
-          x <- haploTmp[,2]
-          haploTmp[,2] <- sapply(x, function(x) if (x >= index) x <- x - 1 else x)
-          
-          labels <- labels[labels != attr(haplonet,"labels")[index]]
-        }
+        } 
         
+        x <- haploTmp[,1]
+        haploTmp[,1] <- sapply(x, function(x) if (x >= index) x <- x - 1 else x)
+        x <- haploTmp[,2]
+        haploTmp[,2] <- sapply(x, function(x) if (x >= index) x <- x - 1 else x)
+          
+        
+        labels <- labels[labels != i]
       }
     }
     haplonet <- haploTmp
