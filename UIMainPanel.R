@@ -5,11 +5,24 @@ myMainPanel <- mainPanel(conditionalPanel(condition = "output.inputSelected",
                                             tabPanel(
                                               "Data Summary",
                                               value = "dataSummary",
-                                              textOutput("header"),
-                                              conditionalPanel(condition = "output.inputSelected", hr()),
-                                              DT::dataTableOutput("plotMetadata"),
-                                              conditionalPanel(condition = "output.inputSelected", hr()),
-                                              DT::dataTableOutput("plotVcfData")
+                                              conditionalPanel(condition = "input.textboxShowHeader",
+                                                               textOutput("header"),
+                                                               conditionalPanel(condition = "input.textboxShowMeta", hr()),
+                                                               conditionalPanel(condition = "input.textboxShowData", 
+                                                                                conditionalPanel(condition = "!input.textboxShowMeta", hr()))
+                                                               ),
+
+                                              
+                                              conditionalPanel(condition = "input.textboxShowMeta",
+                                                               DT::dataTableOutput("plotMetadata"),
+                                                               conditionalPanel(condition = "input.textboxShowData", hr())
+                                                               ),
+                                              
+                                              
+                                              conditionalPanel(condition = "input.textboxShowData",
+                                                               DT::dataTableOutput("plotVcfData"))
+                                              
+                                              
                                             ),
                                             
                                             tabPanel(
@@ -34,17 +47,20 @@ myMainPanel <- mainPanel(conditionalPanel(condition = "output.inputSelected",
                                                   conditionalPanel(condition = "input.selectNetwork != 1",
                                                                    withSpinner(plotOutput("plotNetwork", click = "plotNetwork_click", width = 100, height = 100))),
                                                   conditionalPanel(condition = "blablabla",
-                                                                   withSpinner(plotOutput("plotIGraph")))
+                                                                   withSpinner(plotOutput("plotIGraph"))),
+                                                  conditionalPanel(condition = "FALSE",
+                                                                   plotOutput("dummyPlot"),
+                                                                   plotOutput("dummyPlot2"))
                                                 ),
+                                                tabPanel(
+                                                  "Dendrogram", value = "dendrogram",
+                                                  withSpinner(plotOutput("plotDendrogram"))
+                                                )
                                                 
                                               )
                                             ),
                                             tabPanel(
                                               "LD", value = "ld"
                                               
-                                            ),
-                                            tabPanel(
-                                              "Dendrogram", value = "dendrogram",
-                                              withSpinner(plotOutput("plotDendrogram"))
                                             )
                                           )))

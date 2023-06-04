@@ -19,7 +19,13 @@ mySidePanel <- sidebarPanel(
     #  h3("Linkage Disequilibrium"),
     #  checkboxInput("checkboxLD", "Plot LD", value = FALSE)
     #),
-    
+    conditionalPanel(
+      condition = "input.mainTabPanel == 'dataSummary'", 
+      checkboxInput("textboxShowHeader", "Show Header of the VCF File"),
+      checkboxInput("textboxShowMeta", "Show Metadata of the VCF File"),
+      checkboxInput("textboxShowData", "Show data of the VCF File"),
+      
+    ),
     conditionalPanel(
       condition = "input.mainTabPanel == 'haplotypes'",
       h3("Haplotypes"),
@@ -113,26 +119,43 @@ mySidePanel <- sidebarPanel(
         #   max = 100,
         #   value = 1
         # ),
-        
-        sliderInput("sliderScaleNetwork", "Scale Nodes", min = 1, max = 10, value = 5),
         checkboxInput("checkboxScaleNetwork", "Scale Network Nodes to Frequency"),
-        sliderInput("sizeNetwork", "Size of Network Plot [pixels]", min = 250, max = 1500, value = 400),
+        checkboxInput("checkboxFastPlotHaplonet", "Use fast plotting option for haplonet"),
+        sliderInput("sizeNetwork", "Size of Network Plot [pixels]", min = 250, max = 1500, value = 750),
+        sliderInput("sliderScaleNetwork", "Scale Nodes", min = 1, max = 10, value = 5),
+        sliderInput("sliderLabels", "Scale Node Labels", min = 0, max = 2, step = 0.1, value = 0.7),
+
         sliderInput("sliderTreshold", "Treshold for additional Edges", min = 0, max = 10, value = 0),
-        sliderInput("sliderLabels", "Scale Node Labels", min = 0, max = 2, step = 0.1, value = 1),
         radioButtons("radioButtonEdges", "How to display Edge Weigths", choices = list( "Don't show" = 0, "As lines" = 1, "As Dots" = 2, "As Numbers" = 3), selected = 0),
-        checkboxInput("checkboxIGraph", "Display Network as iGraph")
         
-      )
-      
-      
-    ),
+        hr(),
+        checkboxInput("checkboxIGraph", "Display Network as iGraph"),
+        checkboxInput("checkboxIGraphAdditionalEdges", "Include additional edges to IGraph"),
+        
+        
+        hr(),
+        textInput("textRemoveNodes", label = "Nodes to be shown in the network"),
+        bsTooltip(id = "textRemoveNodes", placement = "bottom", title = "To remove nodes from the network, please delete them from the textbox. You can also add nodes that have been deleted back to the textbox."),
+        #checkboxInput("checkboxSubmitEdgeChanges", "Apply Changes"),
+        actionButton("buttonSubmitEdgeChanges", "Apply Changes"),
+        hr(),
+        h4("Export Haplonet"),
+        textInput("textHaplonetName", "Name of export file"),
+        actionButton("buttonExportHaplonetCsv", "Export Haplonet to csv"),
+        actionButton("buttonExportHaplonetTxt", "Export Haplonet to txt")
+        
+        
+      ),
     conditionalPanel(
-        condition = "input.mainTabPanel == 'dendrogram'",
+        condition = "input.subTabPanel == 'dendrogram'",
+        h3("Dendrogram"),
         radioButtons("radioButtonDendrogram", "Agglomeration Method", choices = list("ward.D", "ward.D2", "single", "complete", "average", "mcquitty", "median", "centroid")),
         sliderInput("sliderScaleDendrogramX", "Size of Dendrogram - Width [pixels]", min = 250, max = 1500, value = 400),
         sliderInput("sliderScaleDendrogramY", "Size of Dendrogram - Height [pixels]", min = 250, max = 1500, value = 400)
         
       
         )
+      
+    )
   )
 )

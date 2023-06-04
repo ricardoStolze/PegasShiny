@@ -10,6 +10,7 @@ library(igraph)
 library(shinycssloaders)
 library(shinyBS)
 library(graphics)
+library(foreach)
 
 source('appUI.R')
 source('appServer.R')
