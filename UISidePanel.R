@@ -135,9 +135,11 @@ mySidePanel <- sidebarPanel(
         
         hr(),
         textInput("textRemoveNodes", label = "Nodes to be shown in the network"),
-        bsTooltip(id = "textRemoveNodes", placement = "bottom", title = "To remove nodes from the network, please delete them from the textbox. You can also add nodes that have been deleted back to the textbox."),
+        bsTooltip(id = "textRemoveNodes", placement = "bottom", title = "To remove nodes from the network, please delete them from the textbox and press the apply button."),
         #checkboxInput("checkboxSubmitEdgeChanges", "Apply Changes"),
         actionButton("buttonSubmitEdgeChanges", "Apply Changes"),
+        actionButton("buttonResetEdgeChanges", "Reset Changes"),
+        hr(),
         h4("Export Haplonet"),
         textInput("textHaplonetName", "Name of export file"),
         actionButton("buttonExportHaplonetCsv", "Export Haplonet to csv"),
