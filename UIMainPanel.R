@@ -12,17 +12,13 @@ myMainPanel <- mainPanel(conditionalPanel(condition = "output.inputSelected",
                                                                                 conditionalPanel(condition = "!input.textboxShowMeta", hr()))
                                                                ),
 
-                                              
                                               conditionalPanel(condition = "input.textboxShowMeta",
                                                                DT::dataTableOutput("plotMetadata"),
                                                                conditionalPanel(condition = "input.textboxShowData", hr())
                                                                ),
                                               
-                                              
                                               conditionalPanel(condition = "input.textboxShowData",
                                                                DT::dataTableOutput("plotVcfData"))
-                                              
-                                              
                                             ),
                                             
                                             tabPanel(
@@ -56,11 +52,9 @@ myMainPanel <- mainPanel(conditionalPanel(condition = "output.inputSelected",
                                                   "Dendrogram", value = "dendrogram",
                                                   withSpinner(plotOutput("plotDendrogram"))
                                                 )
-                                                
                                               )
                                             ),
                                             tabPanel(
                                               "LD", value = "ld"
-                                              
                                             )
                                           )))

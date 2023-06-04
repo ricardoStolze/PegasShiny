@@ -29,17 +29,8 @@ mySidePanel <- sidebarPanel(
     conditionalPanel(
       condition = "input.mainTabPanel == 'haplotypes'",
       h3("Haplotypes"),
-      #sliderInput(
-      #  "sliderHaplotypesDuo",
-      #  "Frequency Range of displayed Haplotypes",
-      #  min = 0,
-      #  max = 0,
-      #  value = c(0,0),
-      #  step = 1
-      #),
-      
+
       radioButtons("radioButtonNumberPercentage", "Select number of displayed Haplotypes by:", choices = list("Percentage" = 1, "Number" = 2), selected = 2),
-      
       conditionalPanel(
         condition = "input.radioButtonNumberPercentage == 1",
         sliderInput(
@@ -83,10 +74,6 @@ mySidePanel <- sidebarPanel(
         checkboxInput("checkboxCluster", "Cluster Heatmap"),
         #checkboxInput("showDMPlot", "Heatmap einblenden"),
         #checkboxInput("showDMMatrix", "Matrix einblenden"),
-        
-        #tags$div(id = "placeholderDM"),
-        #actionButton("addDistanceMatrix", "+"),
-        #actionButton("removeDistanceMatrix", "-")
       ),
       
       
@@ -112,13 +99,6 @@ mySidePanel <- sidebarPanel(
         #sliderInput("sliderIntNJAlpha", "Alpha for IntNJ Algorithm", min = 0, max =  1, step=0.1, value = 0)
         #),
         
-        # sliderInput(
-        #   "sliderNetwork",
-        #   "# of Haplotypes displayed in Network in percent",
-        #   min = 1,
-        #   max = 100,
-        #   value = 1
-        # ),
         checkboxInput("checkboxScaleNetwork", "Scale Network Nodes to Frequency"),
         checkboxInput("checkboxFastPlotHaplonet", "Use fast plotting option for haplonet"),
         sliderInput("sizeNetwork", "Size of Network Plot [pixels]", min = 250, max = 1500, value = 750),
@@ -136,14 +116,14 @@ mySidePanel <- sidebarPanel(
         hr(),
         textInput("textRemoveNodes", label = "Nodes to be shown in the network"),
         bsTooltip(id = "textRemoveNodes", placement = "bottom", title = "To remove nodes from the network, please delete them from the textbox and press the apply button."),
-        #checkboxInput("checkboxSubmitEdgeChanges", "Apply Changes"),
         actionButton("buttonSubmitEdgeChanges", "Apply Changes"),
         actionButton("buttonResetEdgeChanges", "Reset Changes"),
         hr(),
         h4("Export Haplonet"),
         textInput("textHaplonetName", "Name of export file"),
-        actionButton("buttonExportHaplonetCsv", "Export Haplonet to csv"),
-        actionButton("buttonExportHaplonetTxt", "Export Haplonet to txt")
+        actionButton("buttonExportHaplonetCsv", "Export Haplonet to .csv"),
+        actionButton("buttonExportHaplonetTxt", "Export Haplonet to .txt"),
+        actionButton("buttonExportHaplonetRDS", "Export Haplonet to .RDS")
         
         
       ),
