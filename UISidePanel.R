@@ -29,7 +29,6 @@ mySidePanel <- sidebarPanel(
     conditionalPanel(
       condition = "input.mainTabPanel == 'haplotypes'",
       h3("Haplotypes"),
-
       radioButtons("radioButtonNumberPercentage", "Select number of displayed Haplotypes by:", choices = list("Percentage" = 1, "Number" = 2), selected = 2),
       conditionalPanel(
         condition = "input.radioButtonNumberPercentage == 1",
@@ -57,6 +56,21 @@ mySidePanel <- sidebarPanel(
       
       textOutput("textPersonPercentage"),
       bsTooltip(id = "textPersonPercentage", title = "Is calculated using the frequency sums shown in the first column of the haplotype table"),
+      
+      hr(),
+      h4("Export"),
+      textInput("textExportFileName", "Name of download files"),
+      radioButtons("radioButtonExportTxtCsv", "Export as:", choices = list(".txt", ".csv")),
+      bsTooltip(id = "textExportFileName", title = "Each File created will get their own attachment to the base file name here, sothat they become distinguishable."),
+      downloadButton("buttonExportHaplotypeTable", "Download Haplotype Table"),
+      
+      conditionalPanel(condition = "input.subTabPanel == 'distanceMatrix'",
+                       downloadButton("buttonExportDistanceMatrix", "Download Distance Matrix"),
+      ),
+      conditionalPanel(condition = "input.subTabPanel == 'network'",
+                       downloadButton("buttonExportHaplonet", "Download Haplonet"),
+                       downloadButton("buttonExportHaplonetRDS", "Download Haplonet to .RDS")
+      ),
       
       conditionalPanel(
         condition = "input.subTabPanel == 'distanceMatrix'",
@@ -118,12 +132,7 @@ mySidePanel <- sidebarPanel(
         bsTooltip(id = "textRemoveNodes", placement = "bottom", title = "To remove nodes from the network, please delete them from the textbox and press the apply button."),
         actionButton("buttonSubmitEdgeChanges", "Apply Changes"),
         actionButton("buttonResetEdgeChanges", "Reset Changes"),
-        hr(),
-        h4("Export Haplonet"),
-        textInput("textHaplonetName", "Name of export file"),
-        actionButton("buttonExportHaplonetCsv", "Export Haplonet to .csv"),
-        actionButton("buttonExportHaplonetTxt", "Export Haplonet to .txt"),
-        actionButton("buttonExportHaplonetRDS", "Export Haplonet to .RDS")
+        
         
         
       ),

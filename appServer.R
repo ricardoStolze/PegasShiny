@@ -1,5 +1,4 @@
 server <- function(input, output, session) {
-  
   # Reactives   --------------------------------------------------------------------------
   
   vcfRInput <- reactive({
@@ -14,7 +13,9 @@ server <- function(input, output, session) {
   #calculates haplotypes using pegas function 'haplotypes()'
   getAllHaplotypes <- reactive({
     vcfData <- vcfInput()
-    haplotypes <- pegas::haplotype(vcfData, locus = 1:ncol(vcfData), strict = TRUE)
+    haplotypes <-
+      pegas::haplotype(vcfData,
+                       locus = 1:ncol(vcfData),
     #sort by haplotype frequencies
     haplotypes <- sort(haplotypes)
     
@@ -26,29 +27,32 @@ server <- function(input, output, session) {
   })
   
   getHaplotypes <- reactive({
-    
     haplotypes <- getAllHaplotypes()
     oc <- oldClass(haplotypes)
-    from <- attr(haplotypes,"from")
+    from <- attr(haplotypes, "from")
     idx <- attr(haplotypes, "index")
-    f <- sapply(idx,length)
+    f <- sapply(idx, length)
     s <- logical(length <- nrow(haplotypes))
     
-    if (input$radioButtonNumberPercentage == 1){
+    if (input$radioButtonNumberPercentage == 1) {
       val <- getNumberHaplotypesByPercentage()
     }
     else {
       val <- input$sliderHaplotypes
     }
-
+    
     s[1:val] <- TRUE
-    haplotypes <- haplotypes[s,]
-    attr(haplotypes,"index") <- idx[s]
+    haplotypes <- haplotypes[s, ]
+    attr(haplotypes, "index") <- idx[s]
     class(haplotypes) <- oc
     attr(haplotypes, "from") <- from
     
-    updateTextInput(session = session, inputId = "textRemoveNodes", value = labels(haplotypes))
-
+    updateTextInput(
+      session = session,
+      inputId = "textRemoveNodes",
+      value = labels(haplotypes)
+    )
+    
     haplotypes
   })
   
@@ -56,13 +60,15 @@ server <- function(input, output, session) {
     #browser()
     frequencyAllHaplotypes <- summary(getAllHaplotypes())
     sumAllSequences <- sum(frequencyAllHaplotypes)
-    numberSequencesToBeDisplayed <- round(sumAllSequences * input$sliderPercentageSequences / 100)
+    numberSequencesToBeDisplayed <-
+      round(sumAllSequences * input$sliderPercentageSequences / 100)
     numberHaplotypesToBeDisplayed <- 0
     counter <- 0
-    for (i in summary(getAllHaplotypes())){
+    for (i in summary(getAllHaplotypes())) {
       counter <- counter + i
-      numberHaplotypesToBeDisplayed <- numberHaplotypesToBeDisplayed + 1
-      if (counter >= numberSequencesToBeDisplayed){
+      numberHaplotypesToBeDisplayed <-
+        numberHaplotypesToBeDisplayed + 1
+      if (counter >= numberSequencesToBeDisplayed) {
         break
       }
     }
@@ -75,27 +81,28 @@ server <- function(input, output, session) {
     req(input$file)
     #browser()
     haplotypes <-
-      getHaplotypes() 
+      getHaplotypes()
     haplMatrix <-
       matrix(nrow = nrow(haplotypes),
              ncol = ncol(haplotypes) + 1) # first column will be populated with haplotype frequencies
     for (i in 1:nrow(haplotypes)) {
       for (j in 1:ncol(haplotypes)) {
-        #alview prints whole sequences to output, so capture is used to grab single base from sequence and populate matrix 
-        tmp <- toString(capture.output(alview(haplotypes[i,j], showpos = FALSE)))
+        #alview prints whole sequences to output, so capture is used to grab single base from sequence and populate matrix
+        tmp <-
+          toString(capture.output(alview(haplotypes[i, j], showpos = FALSE)))
         #alview prints more than just a letter for the base, so additional info is cut
-        haplMatrix[i,j+1] <- substr(tmp, start = nchar(tmp), stop = nchar(tmp))
+        haplMatrix[i, j + 1] <-
+          substr(tmp, start = nchar(tmp), stop = nchar(tmp))
       }
     }
-    #browser()
-    if (input$radioButtonNumberPercentage == 1){
-      #browser()
+    if (input$radioButtonNumberPercentage == 1) {
       val <- getNumberHaplotypesByPercentage()
     }
     else {
       val <- input$sliderHaplotypes
     }
-    haplMatrix[,1] <- rowSums(haploFreq(vcfInput(), haplo = getAllHaplotypes()))[1:val]
+    haplMatrix[, 1] <-
+      rowSums(haploFreq(vcfInput(), haplo = getAllHaplotypes()))[1:val]
     
     #for sliderHaplotypesDuo use
     #frequencies <- as.numeric(rowSums(haploFreq(vcfInput(), haplo = getAllHaplotypes())))
@@ -114,16 +121,22 @@ server <- function(input, output, session) {
     # sometimes "N" is used instead of gap symbols (especially in the last column), so that needs to be replaced
     haplMatrix[haplMatrix == "N"] <- "-"
     
-    for (i in 1:dim(vcfRHapls)[2]) {   #for every loki
-      if (any(nchar(vcfRHapls[,i]) > 1) ) { #check, if more than one base is assigned
-        max <- max(nchar(vcfRHapls[,i]))   #how many bases are assigned
+    for (i in 1:dim(vcfRHapls)[2]) {
+      #for every loki
+      if (any(nchar(vcfRHapls[, i]) > 1)) {
+        #check, if more than one base is assigned
+        max <-
+          max(nchar(vcfRHapls[, i]))   #how many bases are assigned
         j <- 2
-        while(j <= max){ # while full number of bases not reached
-          haplMatrix[,i+1] <- paste(haplMatrix[,i+1], haplMatrix[,i+j]) #concatenate two columns
+        while (j <= max) {
+          # while full number of bases not reached
+          haplMatrix[, i + 1] <-
+            paste(haplMatrix[, i + 1], haplMatrix[, i + j]) #concatenate two columns
           
           j <- j + 1
         }
-        haplMatrix <- haplMatrix[,-(i+2):-(i+max)] #delete extra columns
+        haplMatrix <-
+          haplMatrix[, -(i + 2):-(i + max)] #delete extra columns
       }
     }
     colnames(haplMatrix) <- append(list("freq"), getID(vcfRInput()))
@@ -138,36 +151,43 @@ server <- function(input, output, session) {
   
   calculateHaplonet <- reactive({
     haplotypes <- getHaplotypes()
-    #browser()
-
+    
     distanceMatrixHamming <- dist.hamming(haplotypes)
-    if(input$selectNetwork == "1"){#NoPlot
+    if (input$selectNetwork == "1") {
+      #NoPlot
       haplonet <- NULL
-    } 
-    if(input$selectNetwork == "2"){#TCS
+    }
+    if (input$selectNetwork == "2") {
+      #TCS
       haplonet <- haploNet(haplotypes)
-    } 
-    if(input$selectNetwork == "3"){#MSN
+    }
+    if (input$selectNetwork == "3") {
+      #MSN
       haplonet <- msn(distanceMatrixHamming)
     }
-    else if(input$selectNetwork == "4"){#MJN      
-      haplonet <- pegas::mjn(haplotypes)#, strict = TRUE))#, threshold = 2)
-      #browser()
+    else if (input$selectNetwork == "4") {
+      #MJN
+      browser()
+      haplonet <-
+        pegas::mjn(del.colgapsonly(haplotypes, threshold = 10))#, strict = TRUE))#, threshold = 2)
     }
-    else if(input$selectNetwork == "5"){#IntNJ
+    else if (input$selectNetwork == "5") {
+      #IntNJ
       haplonet <- calculateIntNJ()
     }
-    else if(input$selectNetwork == "6"){#RMST
+    else if (input$selectNetwork == "6") {
+      #RMST
       haplonet <- rmst(distanceMatrixHamming, quiet = TRUE)
     }
     
-    updateSliderInput(session = session, inputId = "sliderTreshold", max = max(attr(haplonet, "alter.links")[,3]))
-
+    updateSliderInput(session = session,
+                      inputId = "sliderTreshold",
+                      max = max(attr(haplonet, "alter.links")[, 3]))
+    
     haplonet
   })
   
   calculateIntNJ <- reactive({
-    
     alpha <- input$sliderIntNJAplha
     haplotypes <- getHaplotypes()
     distanceMatrix <- as.matrix(dist.hamming(haplotypes))
@@ -180,61 +200,72 @@ server <- function(input, output, session) {
     numberTotalHaplotypes <- dim(distanceMatrix)[1]
     
     counter <- 1
-    while(dim(distanceMatrix)[1] > 2){
+    while (dim(distanceMatrix)[1] > 2) {
       dimensionDistanceMatrix <- dim(distanceMatrix)
       numberRemainingHaplotypes <- dim(distanceMatrix)[1]
       
       #step a - calculate average distances between the remaining taxas of the network (added junctions and haplotypes)
       distanceVector <- vector(length = numberRemainingHaplotypes)
-      for (i in 1: numberRemainingHaplotypes){
-        distanceVector[i] <- sum(distanceMatrix[i,])/(numberRemainingHaplotypes-2) 
+      for (i in 1:numberRemainingHaplotypes) {
+        distanceVector[i] <-
+          sum(distanceMatrix[i, ]) / (numberRemainingHaplotypes - 2)
       }
       
       #step b - calculate temporary matrix m containing the differences between the remaining taxas
       m = matrix(nrow = dimensionDistanceMatrix[1], ncol = dimensionDistanceMatrix[2])
-      for (i in 1: dimensionDistanceMatrix[1]){
-        for (j in 1: dimensionDistanceMatrix[2]){
-          if(i!=j){
-            m[i,j] = distanceMatrix[i,j] - (distanceVector[i] + distanceVector[j])
+      for (i in 1:dimensionDistanceMatrix[1]) {
+        for (j in 1:dimensionDistanceMatrix[2]) {
+          if (i != j) {
+            m[i, j] = distanceMatrix[i, j] - (distanceVector[i] + distanceVector[j])
             next
           }
-          m[i,j] =  0
+          m[i, j] =  0
         }
       }
       
-      #step c - combine two taxas with the smallest difference to subtaxa u 
+      #step c - combine two taxas with the smallest difference to subtaxa u
       #search for smallest value in m
-      u <- which(m == min(m), arr.ind = TRUE)[1,]
+      u <- which(m == min(m), arr.ind = TRUE)[1, ]
       
       
-      #calculate edge lengths between parent taxas and subtaxa 
-      vi <- (unname(distanceMatrix[u[1],u[2]]) + distanceVector[u[1]] - distanceVector[u[2]]) / 2
-      vj <- unname(distanceMatrix[u[1],u[2]]) - vi
+      #calculate edge lengths between parent taxas and subtaxa
+      vi <-
+        (unname(distanceMatrix[u[1], u[2]]) + distanceVector[u[1]] - distanceVector[u[2]]) / 2
+      vj <- unname(distanceMatrix[u[1], u[2]]) - vi
       
-      #extendDistanceMatrix by subtaxa u by calculating distances from u to the other remaining taxa 
+      #extendDistanceMatrix by subtaxa u by calculating distances from u to the other remaining taxa
       # calculated distances will be stored in v
       v <- vector(length = dimensionDistanceMatrix[1] + 1)
-      for (i in 1: dimensionDistanceMatrix[1]){
-        v[i] <- (distanceMatrix[u[1],i] + distanceMatrix[u[2],i] - distanceMatrix[u[1],u[2]])/2
+      for (i in 1:dimensionDistanceMatrix[1]) {
+        v[i] <-
+          (distanceMatrix[u[1], i] + distanceMatrix[u[2], i] - distanceMatrix[u[1], u[2]]) /
+          2
       }
       v[length(v)] <- 0
       #extend distance Matrix by v
-      distanceMatrix <- rbind(distanceMatrix, v[1:length(v)-1])
+      distanceMatrix <- rbind(distanceMatrix, v[1:length(v) - 1])
       distanceMatrix <- cbind(distanceMatrix, v)
       
       #add new rowname for u to distance matrix and listJunctions
-      rownames(distanceMatrix) <- append(rownames(distanceMatrix)[1:length(rownames(distanceMatrix))-1], paste("u",toString(counter), sep =""))
-      listJunctions <- append(listJunctions, paste("u", toString(counter), sep = ""))
+      rownames(distanceMatrix) <-
+        append(rownames(distanceMatrix)[1:length(rownames(distanceMatrix)) - 1],
+               paste("u", toString(counter), sep = ""))
+      listJunctions <-
+        append(listJunctions, paste("u", toString(counter), sep = ""))
       
       # add new edges between the two parentTaxa and subtaxa u with previously calculated distances vi and vj
       ui <- which(listJunctions == rownames(distanceMatrix)[u[1]])
       uj <- which(listJunctions == rownames(distanceMatrix)[u[2]])
-      haplonet <- rbind(haplonet, c(ui, numberTotalHaplotypes + counter, ceiling(vi)))
-      haplonet <- rbind(haplonet, c(uj, numberTotalHaplotypes + counter, ceiling(vj)))
+      haplonet <-
+        rbind(haplonet,
+              c(ui, numberTotalHaplotypes + counter, ceiling(vi)))
+      haplonet <-
+        rbind(haplonet,
+              c(uj, numberTotalHaplotypes + counter, ceiling(vj)))
       
       #delete old parenttaxas of u from distance matrix
-      distanceMatrix <- distanceMatrix[-max(u),-max(u)]
-      distanceMatrix <- distanceMatrix[-min(u),-min(u)]
+      distanceMatrix <- distanceMatrix[-max(u), -max(u)]
+      distanceMatrix <- distanceMatrix[-min(u), -min(u)]
       
       counter <- counter + 1
     }
@@ -242,19 +273,21 @@ server <- function(input, output, session) {
     #combine last two remaining clusters
     ui <- which(listJunctions == rownames(distanceMatrix)[1])
     uj <- which(listJunctions == rownames(distanceMatrix)[2])
-    haplonet<- rbind(haplonet, c(ui, uj, ceiling(distanceMatrix[1,2])))
+    haplonet <-
+      rbind(haplonet, c(ui, uj, ceiling(distanceMatrix[1, 2])))
     
     #change some attributes to addapt haplonet matrix to pegas haplonets
-    colnames(haplonet) <- c("","","step")
-    listJunctions[(numberTotalHaplotypes + 1) : length(listJunctions)] <- " "
+    colnames(haplonet) <- c("", "", "step")
+    listJunctions[(numberTotalHaplotypes + 1):length(listJunctions)] <-
+      " "
     attr(haplonet, "labels") <- listJunctions
     attr(haplonet, "data") <- vcfInput()
     attr(haplonet, "prefix") <- " "
     class(haplonet) <- c("mjn", "haploNet")
-
+    
     haplonet
     
-
+    
   })
   
   #checks whether file upload has been triggered, useful for dependent gui
@@ -267,7 +300,6 @@ server <- function(input, output, session) {
   })
   outputOptions(output, 'inputSelected', suspendWhenHidden = FALSE)
   
-  #new
   haplonet <- reactiveVal()
   
   
@@ -301,61 +333,116 @@ server <- function(input, output, session) {
     ))
   })
   
-  observeEvent(input$haptools, {
-    #
-    os <- import("os")
-    print(os$lostdir("."))
-  })
+  output$buttonExportHaplotypeTable <- downloadHandler(
+    filename = function() {
+      if (input$radioButtonExportTxtCsv == ".txt") {
+        paste(input$textExportFileName, "_haplotypeTable.txt", sep = "")
+      } else {
+        paste(input$textExportFileName, "_haplotypeTable.csv", sep = "")
+      }
+    },
+    content = function(file) {
+      if (input$radioButtonExportTxtCsv == ".txt") {
+        write.table(calculateHaplotypeTable(), file)
+      } else{
+        write.csv(calculateHaplotypeTable(), file)
+      }
+    }
+  )
   
-  observeEvent(input$buttonExportHaplonetCsv,{
-    write.csv(haplonet(), file = paste(input$textHaplonetName, ".csv", sep = ""))
-  })
-  observeEvent(input$buttonExportHaplonetTxt,{
-    write.table(haplonet(), file = paste(input$textHaplonetName, ".txt", sep = ""))
-    write.table(attr(haplonet(), "labels"), file = paste(input$textHaplonetName, "_labels.txt", sep = ""))
-    write.table(attr(haplonet(), "alter.links"), file = paste(input$textHaplonetName, "_additionalLinks.txt", sep = ""))
-  })
-  observeEvent(input$buttonExportHaplonetRDS,{
-        saveRDS(haplonet(), file = paste(input$textHaplonetName, ".RDS"))# RDS for saving single R objects
-  })
+  output$buttonExportHaplonet <- downloadHandler(
+    filename = function() {
+      if (input$radioButtonExportTxtCsv == ".txt") {
+        paste(input$textExportFileName, "_haplonet.txt", sep = "")
+      } else {
+        paste(input$textExportFileName, "_haplonet.csv", sep = "")
+      }
+    },
+    content = function(file) {
+      if (input$radioButtonExportTxtCsv == ".txt") {
+        write.table(haplonet(), file)
+        write.table(attr(haplonet(), "alter.links") , file, append = TRUE)
+        write.table(attr(haplonet(), "labels") , file, append = TRUE)
+        
+      } else{
+        write.csv(haplonet(), file)
+        write.csv(attr(haplonet(), "alter.links") , file, append = TRUE)
+        write.csv(attr(haplonet(), "labels") , file, append = TRUE)
+      }
+    }
+  )
   
-  observeEvent(input$file,{
+  output$buttonExportDistanceMatrix <- downloadHandler(
+    filename = function() {
+      if (input$radioButtonExportTxtCsv == ".txt") {
+        paste(input$textExportFileName, "_distanceMatrix.txt", sep = "")
+      } else {
+        paste(input$textExportFileName, "_distanceMatrix.csv", sep = "")
+      }
+    },
+    content = function(file) {
+      if (input$radioButtonExportTxtCsv == ".txt") {
+        write.table(as.matrix(dist.hamming(getHaplotypes())), file)
+      } else{
+        write.csv(as.matrix(dist.hamming(getHaplotypes())), file)
+      }
+    }
+  )
+  
+  
+  
+  observeEvent(input$file, {
     haplotypes <- getAllHaplotypes()
     
     if (nrow(haplotypes) <= 10) {
-      updateSliderInput(session, "sliderHaplotypes", max = nrow(haplotypes), value = nrow(haplotypes))
+      updateSliderInput(
+        session,
+        "sliderHaplotypes",
+        max = nrow(haplotypes),
+        value = nrow(haplotypes)
+      )
     } else {
-      updateSliderInput(session, "sliderHaplotypes", max = nrow(haplotypes), value = 10)
+      updateSliderInput(session,
+                        "sliderHaplotypes",
+                        max = nrow(haplotypes),
+                        value = 10)
     }
     
     haplonet(calculateHaplonet())
-    updateTextInput(session, "textHaplonetName" ,value = paste(unlist(strsplit(input$file$name, "[.]"))[1], "_haplonet", sep=""))
-
+    updateTextInput(session, "textExportFileName" , value = unlist(strsplit(input$file$name, "[.]"))[1])
+    
   })
   
-  observeEvent(input$radioButtonNumberPercentage,{
+  observeEvent(input$radioButtonNumberPercentage, {
     req(input$file)
-    if (input$radioButtonNumberPercentage == 1){ # percentage
+    if (input$radioButtonNumberPercentage == 1) {
+      # percentage
       frequencyAllHaplotypes <- summary(getAllHaplotypes())
       sumFrequencyAllHaplotypes <- sum(frequencyAllHaplotypes)
-      frequencySelectedHaplotypes <- frequencyAllHaplotypes[1:input$sliderHaplotypes]
-      sumFrequencySelectedHaplotypes <- sum(frequencySelectedHaplotypes)
-      percentage <- round(sumFrequencySelectedHaplotypes/sumFrequencyAllHaplotypes * 100)
+      frequencySelectedHaplotypes <-
+        frequencyAllHaplotypes[1:input$sliderHaplotypes]
+      sumFrequencySelectedHaplotypes <-
+        sum(frequencySelectedHaplotypes)
+      percentage <-
+        round(sumFrequencySelectedHaplotypes / sumFrequencyAllHaplotypes * 100)
       updateSliderInput(inputId = "sliderPercentageSequences", value = percentage)
     }
-    else { # totalNumber
+    else {
+      # totalNumber
       sumAllSequences <- sum(summary(getAllHaplotypes()))
-       numberSequencesToBeDisplayed <- round(sumAllSequences * input$sliderPercentageSequences / 100)
-       numberHaplotypesToBeDisplayed <- 0
-       counter <- 0
-       for (i in summary(getAllHaplotypes())){
-         counter <- counter + i
-         numberHaplotypesToBeDisplayed <- numberHaplotypesToBeDisplayed + 1
-         if (counter >= numberSequencesToBeDisplayed){
-           break
-         }
-       }
-       updateSliderInput(inputId = "sliderHaplotypes", value = numberHaplotypesToBeDisplayed)
+      numberSequencesToBeDisplayed <-
+        round(sumAllSequences * input$sliderPercentageSequences / 100)
+      numberHaplotypesToBeDisplayed <- 0
+      counter <- 0
+      for (i in summary(getAllHaplotypes())) {
+        counter <- counter + i
+        numberHaplotypesToBeDisplayed <-
+          numberHaplotypesToBeDisplayed + 1
+        if (counter >= numberSequencesToBeDisplayed) {
+          break
+        }
+      }
+      updateSliderInput(inputId = "sliderHaplotypes", value = numberHaplotypesToBeDisplayed)
     }
   })
   
@@ -363,7 +450,7 @@ server <- function(input, output, session) {
   removeEdges <- reactive({
     haplonet <- haplonet()
     
-    #save attributes 
+    #save attributes
     labels <- attr(haplonet, "labels")
     data <- attr(haplonet, "data")
     prefix <- attr(haplonet, "prefix")
@@ -373,31 +460,43 @@ server <- function(input, output, session) {
     haploTmp <- haplonet
     
     # haplotypeStrings includes all the nodes, which the user wants to keep
-    haplotypeStrings <- unlist(strsplit(input$textRemoveNodes,"," ))
+    haplotypeStrings <- unlist(strsplit(input$textRemoveNodes, ","))
     
-    for (i in attr(haplonet,"labels")){
-      if (! i %in% haplotypeStrings){ # if one haplotype is not in haplotypeStrings, then it will be deleted from the haplonet as well as all edges connecting it
+    for (i in attr(haplonet, "labels")) {
+      if (!i %in% haplotypeStrings) {
+        # if one haplotype is not in haplotypeStrings, then it will be deleted from the haplonet as well as all edges connecting it
         
         index <- match(i, labels)
-        linesToBeRemoved <- c(which(haploTmp[,1] == index), which(haploTmp[,2] == index))
-        if (length(linesToBeRemoved) > 0){
-          haploTmp <- haploTmp[-linesToBeRemoved,]
-        } 
+        linesToBeRemoved <-
+          c(which(haploTmp[, 1] == index), which(haploTmp[, 2] == index))
+        if (length(linesToBeRemoved) > 0) {
+          haploTmp <- haploTmp[-linesToBeRemoved, ]
+        }
         
         # decrease the number/name in the first two columns, if it is higher than the current haplotypes index
         # this has to be done, because the number relies to the label-list. but the haplonet will also be deleted from there
-        x <- haploTmp[,1]
-        haploTmp[,1] <- sapply(x, function(x) if (x >= index) x <- x - 1 else x)
-        x <- haploTmp[,2]
-        haploTmp[,2] <- sapply(x, function(x) if (x >= index) x <- x - 1 else x)
-          
+        x <- haploTmp[, 1]
+        haploTmp[, 1] <-
+          sapply(x, function(x)
+            if (x >= index)
+              x <- x - 1
+            else
+              x)
+        x <- haploTmp[, 2]
+        haploTmp[, 2] <-
+          sapply(x, function(x)
+            if (x >= index)
+              x <- x - 1
+            else
+              x)
+        
         
         labels <- labels[labels != i]
       }
     }
     haplonet <- haploTmp
     attr(haplonet, "labels") <- labels
-    attr(haplonet, "data") <- data 
+    attr(haplonet, "data") <- data
     attr(haplonet, "prefix") <- prefix
     class(haplonet) <- class
     
@@ -405,18 +504,17 @@ server <- function(input, output, session) {
     haplonet(haplonet)
   })
   
-
+  
   # Haplotypes  -------------------------------------------------------------------
   
   #plot hamming distance as heatmap with pheatmap package
   output$plotDistanceMatrixAsHeatmap <- renderPlot({
-    
     haplotypes <- getHaplotypes()
     
     d <- dist.haplotype.loci(haplotypes)
     distanceMatrix <- dist.hamming(haplotypes)
     distanceMatrix <- as.matrix(distanceMatrix)
-    if (input$checkboxCluster){
+    if (input$checkboxCluster) {
       pheatmap(
         distanceMatrix,
         labels_row = rownames(distanceMatrix),
@@ -447,9 +545,14 @@ server <- function(input, output, session) {
     frequencyAllHaplotypes <- summary(getAllHaplotypes())
     sumFrequencyAllHaplotypes <- sum(frequencyAllHaplotypes)
     frequencySelectedHaplotypes <- summary(getHaplotypes())
-    sumFrequencySelectedHaplotypes <- sum(frequencySelectedHaplotypes)
-    percentage <- round(sumFrequencySelectedHaplotypes/sumFrequencyAllHaplotypes * 100, digits = 2)
-    paste("The shown haplotypes comply to ", toString(percentage), "% of the sampled sequences")
+    sumFrequencySelectedHaplotypes <-
+      sum(frequencySelectedHaplotypes)
+    percentage <-
+      round(sumFrequencySelectedHaplotypes / sumFrequencyAllHaplotypes * 100,
+            digits = 2)
+    paste("The shown haplotypes comply to ",
+          toString(percentage),
+          "% of the sampled sequences")
   })
   
   # Networks    ---------------------------------------------------------------------
@@ -458,31 +561,52 @@ server <- function(input, output, session) {
     req(input$checkboxIGraph)
     haplotypes <- getHaplotypes()
     distanceMatrixHamming <- dist.hamming(haplotypes)
-
-    haplonetIgraph <- pegas::as.igraph.haploNet(haplonet(),altlinks = input$checkboxIGraphAdditionalEdges)
+    
+    haplonetIgraph <-
+      pegas::as.igraph.haploNet(haplonet(), altlinks = input$checkboxIGraphAdditionalEdges)
     tkplot(haplonetIgraph)
   })
   
   #plot haplotypeNetwork using pegas
   output$plotNetwork <- renderPlot(
-    width = function() input$sizeNetwork,
-    height = function() input$sizeNetwork,
+    width = function()
+      input$sizeNetwork,
+    height = function()
+      input$sizeNetwork,
     res = 96,
     {
       req(input$selectNetwork != 1)
-
-      scaleRatio = 5/input$sliderScaleNetwork
+      
+      scaleRatio = 5 / input$sliderScaleNetwork
       sizeNodes = 1
-      if(input$checkboxScaleNetwork){
+      if (input$checkboxScaleNetwork) {
         sz <- summary(getHaplotypes())
         labels <- attr(haplonet(), 'labels')
         sizeNodes = sz[labels]
       }
-      if(input$selectNetwork == 4 || input$selectNetwork == 5){
-        plot(haplonet(), shape = c("circles", "circles"), cex = input$sliderLabels, fast = input$checkboxFastPlotHaplonet, scale.ratio = scaleRatio, labels = TRUE, show.mutation = input$radioButtonEdges, threshold = c(1,input$sliderThreshold))#, scale.ratio = input$sliderScaleNetwork, treshold = c(1,10))
+      if (input$selectNetwork == 4 || input$selectNetwork == 5) {
+        plot(
+          haplonet(),
+          shape = c("circles", "circles"),
+          cex = input$sliderLabels,
+          fast = input$checkboxFastPlotHaplonet,
+          scale.ratio = scaleRatio,
+          labels = TRUE,
+          show.mutation = input$radioButtonEdges,
+          threshold = c(1, input$sliderThreshold)
+        )#, scale.ratio = input$sliderScaleNetwork, treshold = c(1,10))
         return(NULL)
       }
-      plot(haplonet(), scale.ratio = scaleRatio, fast = input$checkboxFastPlotHaplonet, show.mutation = input$radioButtonEdges, cex = input$sliderLabels, size <- sizeNodes, threshold = c(1,input$sliderTreshold))#, size = summary(getHaplotypes()))
+      plot(
+        haplonet(),
+        scale.ratio = scaleRatio,
+        fast = input$checkboxFastPlotHaplonet,
+        show.mutation = input$radioButtonEdges,
+        cex = input$sliderLabels,
+        size <-
+          sizeNodes,
+        threshold = c(1, input$sliderTreshold)
+      )#, size = summary(getHaplotypes()))
       return(NULL)
       
       
@@ -490,7 +614,8 @@ server <- function(input, output, session) {
       #plot(haplonet, bg = "red", labels = FALSE, show.mutation = 2, scale.ratio = input$sliderScaleNetwork)
       #replot(o)
       
-    })
+    }
+  )
   
   # Data Summary-----------------------------------------------------------------------
   
@@ -507,35 +632,50 @@ server <- function(input, output, session) {
       t(extract.haps(vcfRInput())),
       options = list(scrollX = TRUE),
       caption = "VCF Data"
-    ))  
+    ))
   
   
   # Dendrogram-----------------------------------------------------------------------
   
   output$plotDendrogram <- renderPlot(
-    width = function() input$sliderScaleDendrogramX,
-    height = function() input$sliderScaleDendrogramY,
-    res = 96,{
-    hclust <- hclust(dist.hamming(getHaplotypes()), method = input$radioButtonDendrogram)
-    plot(hclust, hang = -1)
-  })
+    width = function()
+      input$sliderScaleDendrogramX,
+    height = function()
+      input$sliderScaleDendrogramY,
+    res = 96,
+    {
+      hclust <-
+        hclust(dist.hamming(getHaplotypes()),
+               method = input$radioButtonDendrogram)
+      plot(hclust, hang = -1)
+    }
+  )
   
   # Obsolet/Else---------------------------------------------------------------------
   
   
-  calculateHaplonetEventReactive <- eventReactive(input$buttonResetEdgeChanges, { # recalculates haplonet when reset button is pressed
-    haplonet(calculateHaplonet())
-    updateTextInput(session = session, inputId = "textRemoveNodes", value = labels(getHaplotypes()))
-  }) 
-  output$dummyPlot <- renderPlot({# dummy plot to call calculateHaplonet - calculateHaplonet is only triggered by output object whoms directly dependant of it
-    haplonet(calculateHaplonet())
-    calculateHaplonetEventReactive()
-  })
+  calculateHaplonetEventReactive <-
+    eventReactive(input$buttonResetEdgeChanges, {
+      # recalculates haplonet when reset button is pressed
+      haplonet(calculateHaplonet())
+      updateTextInput(
+        session = session,
+        inputId = "textRemoveNodes",
+        value = labels(getHaplotypes())
+      )
+    })
+  output$dummyPlot <-
+    renderPlot({
+      # dummy plot to call calculateHaplonet - calculateHaplonet is only triggered by output object whoms directly dependant of it
+      haplonet(calculateHaplonet())
+      calculateHaplonetEventReactive()
+    })
   
   #dummy to removeEdges - same as with the dummies above
-  removeEdgesEventReactive <- eventReactive(input$buttonSubmitEdgeChanges, {
-    removeEdges()
-  })
+  removeEdgesEventReactive <-
+    eventReactive(input$buttonSubmitEdgeChanges, {
+      removeEdges()
+    })
   output$dummyPlot2 <- renderPlot({
     removeEdgesEventReactive()
   })
