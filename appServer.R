@@ -507,6 +507,7 @@ server <- function(input, output, session) {
     
     #temporary haplonet to be overwritten during process
     haploTmp <- haplonet
+    additionalEdges <- attr(haplonet, "alter.links")
     
     # haplotypeStrings includes all the nodes, which the user wants to keep
     haplotypeStrings <- unlist(strsplit(input$textRemoveNodes, ","))
@@ -518,26 +519,45 @@ server <- function(input, output, session) {
         index <- match(i, labels)
         linesToBeRemoved <-
           c(which(haploTmp[, 1] == index), which(haploTmp[, 2] == index))
+        additionalLinesToBeRemoved <- 
+          c(which(additionalEdges[,1] == index), which(additionalEdges[,2] == index))
         if (length(linesToBeRemoved) > 0) {
           haploTmp <- haploTmp[-linesToBeRemoved, ]
+        }
+        if (length(additionalLinesToBeRemoved) > 0) {
+          additionalEdges <- additionalEdges[-additionalLinesToBeRemoved, ]
         }
         
         # decrease the number/name in the first two columns, if it is higher than the current haplotypes index
         # this has to be done, because the number relies to the label-list. but the haplonet will also be deleted from there
+        # check first column and decrease
         x <- haploTmp[, 1]
         haploTmp[, 1] <-
           sapply(x, function(x)
             if (x >= index)
               x <- x - 1
-            else
-              x)
+            else x)
+        #check secondColumn and decrease
         x <- haploTmp[, 2]
         haploTmp[, 2] <-
           sapply(x, function(x)
             if (x >= index)
               x <- x - 1
-            else
-              x)
+            else x)
+        
+        # same as above but for the alternative links
+        x <- additionalEdges[, 1]
+        additionalEdges[, 1] <-
+          sapply(x, function(x)
+            if (x >= index)
+              x <- x - 1
+            else x)
+        x <- additionalEdges[, 2]
+        additionalEdges[, 2] <-
+          sapply(x, function(x)
+            if (x >= index)
+              x <- x - 1
+            else x)
         
         
         labels <- labels[labels != i]
@@ -547,6 +567,7 @@ server <- function(input, output, session) {
     attr(haplonet, "labels") <- labels
     attr(haplonet, "data") <- data
     attr(haplonet, "prefix") <- prefix
+    attr(haplonet, "alter.links") <- additionalEdges
     class(haplonet) <- class
     
     # update the reactiveVal haplonet()
