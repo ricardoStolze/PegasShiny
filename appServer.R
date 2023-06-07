@@ -389,6 +389,55 @@ server <- function(input, output, session) {
     }
   )
   
+  output$buttonExportHaplonetPDF <- downloadHandler(
+    filename = function() {paste(input$textExportFileName, "_haplonet.pdf", sep = "")},
+    content = function(file) {
+      
+      req(input$selectNetwork != 1)
+      scaleRatio = 5 / input$sliderScaleNetwork
+      sizeNodes = 1
+      if (input$checkboxScaleNetwork) {
+        sz <- summary(getHaplotypes())
+        labels <- attr(haplonet(), 'labels')
+        sizeNodes = sz[labels]
+      }
+      
+      pdf(file)
+      
+      if (input$selectNetwork == 4 || input$selectNetwork == 5) {
+        plot(
+          haplonet(),
+          shape = c("circles", "circles"),
+          cex = input$sliderLabels,
+          fast = input$checkboxFastPlotHaplonet,
+          scale.ratio = scaleRatio,
+          labels = TRUE,
+          show.mutation = input$radioButtonEdges,
+          threshold = c(1, input$sliderThreshold)
+        )
+      }
+      else{
+        plot(
+          haplonet(),
+          scale.ratio = scaleRatio,
+          fast = input$checkboxFastPlotHaplonet,
+          show.mutation = input$radioButtonEdges,
+          cex = input$sliderLabels,
+          size <-
+            sizeNodes,
+          threshold = c(1, input$sliderTreshold)
+        )
+      }
+      dev.off()
+    }
+  )
+  
+  output$buttonExportHaplonetRDS <- downloadHandler(
+    filename = function() {paste(input$textExportFileName, "_haplonet.RDS", sep = "")},
+    content = function(file) {
+      saveRDS(haplonet(), file)
+    }
+  )
   
   
   observeEvent(input$file, {
@@ -567,6 +616,51 @@ server <- function(input, output, session) {
     tkplot(haplonetIgraph)
   })
   
+  haplonetPlotReactive <- reactive({
+    
+    req(input$selectNetwork != 1)
+    scaleRatio = 5 / input$sliderScaleNetwork
+    sizeNodes = 1
+    if (input$checkboxScaleNetwork) {
+      sz <- summary(getHaplotypes())
+      labels <- attr(haplonet(), 'labels')
+      sizeNodes = sz[labels]
+    }
+    if (input$selectNetwork == 4 || input$selectNetwork == 5) {
+      plot(
+        haplonet(),
+        shape = c("circles", "circles"),
+        cex = input$sliderLabels,
+        fast = input$checkboxFastPlotHaplonet,
+        scale.ratio = scaleRatio,
+        labels = TRUE,
+        show.mutation = input$radioButtonEdges,
+        threshold = c(1, input$sliderThreshold)
+      )#, scale.ratio = input$sliderScaleNetwork, treshold = c(1,10))
+      return(NULL)
+    }
+    plot(
+      haplonet(),
+      scale.ratio = scaleRatio,
+      fast = input$checkboxFastPlotHaplonet,
+      show.mutation = input$radioButtonEdges,
+      cex = input$sliderLabels,
+      size <-
+        sizeNodes,
+      threshold = c(1, input$sliderTreshold)
+    )#, size = summary(getHaplotypes()))
+    
+    
+    
+    #return(NULL)
+    
+    
+    #o <- replot()
+    #plot(haplonet, bg = "red", labels = FALSE, show.mutation = 2, scale.ratio = input$sliderScaleNetwork)
+    #replot(o)
+  })
+  
+  
   #plot haplotypeNetwork using pegas
   output$plotNetwork <- renderPlot(
     width = function()
@@ -575,45 +669,7 @@ server <- function(input, output, session) {
       input$sizeNetwork,
     res = 96,
     {
-      req(input$selectNetwork != 1)
-      
-      scaleRatio = 5 / input$sliderScaleNetwork
-      sizeNodes = 1
-      if (input$checkboxScaleNetwork) {
-        sz <- summary(getHaplotypes())
-        labels <- attr(haplonet(), 'labels')
-        sizeNodes = sz[labels]
-      }
-      if (input$selectNetwork == 4 || input$selectNetwork == 5) {
-        plot(
-          haplonet(),
-          shape = c("circles", "circles"),
-          cex = input$sliderLabels,
-          fast = input$checkboxFastPlotHaplonet,
-          scale.ratio = scaleRatio,
-          labels = TRUE,
-          show.mutation = input$radioButtonEdges,
-          threshold = c(1, input$sliderThreshold)
-        )#, scale.ratio = input$sliderScaleNetwork, treshold = c(1,10))
-        return(NULL)
-      }
-      plot(
-        haplonet(),
-        scale.ratio = scaleRatio,
-        fast = input$checkboxFastPlotHaplonet,
-        show.mutation = input$radioButtonEdges,
-        cex = input$sliderLabels,
-        size <-
-          sizeNodes,
-        threshold = c(1, input$sliderTreshold)
-      )#, size = summary(getHaplotypes()))
-      return(NULL)
-      
-      
-      #o <- replot()
-      #plot(haplonet, bg = "red", labels = FALSE, show.mutation = 2, scale.ratio = input$sliderScaleNetwork)
-      #replot(o)
-      
+      haplonetPlotReactive()
     }
   )
   

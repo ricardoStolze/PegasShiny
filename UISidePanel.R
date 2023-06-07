@@ -69,7 +69,9 @@ mySidePanel <- sidebarPanel(
       ),
       conditionalPanel(condition = "input.subTabPanel == 'network'",
                        downloadButton("buttonExportHaplonet", "Download Haplonet"),
-                       downloadButton("buttonExportHaplonetRDS", "Download Haplonet to .RDS")
+                       hr(),
+                       downloadButton("buttonExportHaplonetRDS", "Download Haplonet to .RDS"),
+                       downloadButton("buttonExportHaplonetPDF", "Download Haplonet to .pdf")
       ),
       
       conditionalPanel(
