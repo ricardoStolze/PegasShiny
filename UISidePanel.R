@@ -5,6 +5,7 @@ mySidePanel <- sidebarPanel(
     accept = ".vcf",
     buttonLabel = "Browse"
   ),
+  #checkboxInput("checkboxIndels", "RemoveIndels"),
   conditionalPanel(
     condition = "output.inputSelected",
     fluidRow(),
@@ -21,9 +22,9 @@ mySidePanel <- sidebarPanel(
     #),
     conditionalPanel(
       condition = "input.mainTabPanel == 'dataSummary'", 
-      checkboxInput("textboxShowHeader", "Show Header of the VCF File"),
-      checkboxInput("textboxShowMeta", "Show Metadata of the VCF File"),
-      checkboxInput("textboxShowData", "Show data of the VCF File"),
+      checkboxInput("textboxShowHeader", "Show Metadata of the VCF File"),
+      checkboxInput("textboxShowMeta", "Show Headerdata of the VCF File", value = TRUE),
+      checkboxInput("textboxShowData", "Show Datalines of the VCF File", value = TRUE),
       
     ),
     conditionalPanel(
@@ -66,12 +67,17 @@ mySidePanel <- sidebarPanel(
       
       conditionalPanel(condition = "input.subTabPanel == 'distanceMatrix'",
                        downloadButton("buttonExportDistanceMatrix", "Download Distance Matrix"),
+                       conditionalPanel(condition = "input.selectDistanceMatrix == 3",
+                                        downloadButton("buttonExportHeatmapPDF", "Download Heatmap as PDF"),
+                       )
       ),
+      conditionalPanel(condition = "input.subTabPanel == 'dendrogram'",
+                       downloadButton("buttonExportDendroPDF", "Download Dendrogram as PDF")),
       conditionalPanel(condition = "input.subTabPanel == 'network'",
                        downloadButton("buttonExportHaplonet", "Download Haplonet"),
                        hr(),
                        downloadButton("buttonExportHaplonetRDS", "Download Haplonet to .RDS"),
-                       downloadButton("buttonExportHaplonetPDF", "Download Haplonet to .pdf")
+                       downloadButton("buttonExportHaplonetPDF", "Download Haplonet as PDF")
       ),
       
       conditionalPanel(
@@ -87,7 +93,17 @@ mySidePanel <- sidebarPanel(
           ),
           selected = 3
         ),
-        checkboxInput("checkboxCluster", "Cluster Heatmap"),
+        conditionalPanel(
+          condition = "input.selectDistanceMatrix == 3",
+          checkboxInput("checkboxCluster", "Cluster Heatmap"),
+          conditionalPanel(
+            condition = "input.checkboxCluster",
+            radioButtons("radioButtonClusterHeatmap", "Clustering Method", choices = list("ward.D", "single", "complete", "average", "mcquitty", "median", "centroid"))#, "ward.D2"
+            
+          )
+          #radioButtons("radioButtonClusterHeatmap", "Clustering Method", choices = list("ward.D", "ward.D2", "single", "complete", "average", "mcquitty", "median", "centroid"))
+        )
+        
         #checkboxInput("showDMPlot", "Heatmap einblenden"),
         #checkboxInput("showDMMatrix", "Matrix einblenden"),
       ),
@@ -106,7 +122,8 @@ mySidePanel <- sidebarPanel(
             "MSN" = 3,
             "MJN" = 4,
             "NeighbourJoining Tree" = 5,
-            "RMST" = 6
+            "RMST" = 6,
+            "MST" = 7
           ),
           selected = 2
         ),
@@ -121,7 +138,7 @@ mySidePanel <- sidebarPanel(
         sliderInput("sliderScaleNetwork", "Scale Nodes", min = 1, max = 10, value = 5),
         sliderInput("sliderLabels", "Scale Node Labels", min = 0, max = 2, step = 0.1, value = 0.7),
 
-        sliderInput("sliderTreshold", "Treshold for additional Edges", min = 0, max = 10, value = 0),
+        sliderInput("sliderThreshold", "Threshold for additional Edges", min = 0, max = 10, value = 0),
         radioButtons("radioButtonEdges", "How to display Edge Weigths", choices = list( "Don't show" = 0, "As lines" = 1, "As Dots" = 2, "As Numbers" = 3), selected = 0),
         
         hr(),
@@ -141,7 +158,7 @@ mySidePanel <- sidebarPanel(
     conditionalPanel(
         condition = "input.subTabPanel == 'dendrogram'",
         h3("Dendrogram"),
-        radioButtons("radioButtonDendrogram", "Agglomeration Method", choices = list("ward.D", "ward.D2", "single", "complete", "average", "mcquitty", "median", "centroid")),
+        radioButtons("radioButtonDendrogram", "Agglomeration Method", choices = list("ward.D", "single", "complete", "average", "mcquitty", "median", "centroid")),#, "ward.D2"
         sliderInput("sliderScaleDendrogramX", "Size of Dendrogram - Width [pixels]", min = 250, max = 1500, value = 400),
         sliderInput("sliderScaleDendrogramY", "Size of Dendrogram - Height [pixels]", min = 250, max = 1500, value = 400)
         

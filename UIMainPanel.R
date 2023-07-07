@@ -6,6 +6,7 @@ myMainPanel <- mainPanel(conditionalPanel(condition = "output.inputSelected",
                                               "Data Summary",
                                               value = "dataSummary",
                                               conditionalPanel(condition = "input.textboxShowHeader",
+                                                               h5("Meta Data", class = "custom-h5"),
                                                                textOutput("header"),
                                                                conditionalPanel(condition = "input.textboxShowMeta", hr()),
                                                                conditionalPanel(condition = "input.textboxShowData", 
@@ -38,6 +39,10 @@ myMainPanel <- mainPanel(conditionalPanel(condition = "output.inputSelected",
                                                                    withSpinner(plotOutput("plotDistanceMatrixAsHeatmap")))
                                                 ),
                                                 tabPanel(
+                                                  "Dendrogram", value = "dendrogram",
+                                                  withSpinner(plotOutput("plotDendrogram"))
+                                                ),
+                                                tabPanel(
                                                   "Networks",
                                                   value = "network",
                                                   conditionalPanel(condition = "input.selectNetwork != 1",
@@ -47,14 +52,11 @@ myMainPanel <- mainPanel(conditionalPanel(condition = "output.inputSelected",
                                                   conditionalPanel(condition = "FALSE",
                                                                    plotOutput("dummyPlot"),
                                                                    plotOutput("dummyPlot2"))
-                                                ),
-                                                tabPanel(
-                                                  "Dendrogram", value = "dendrogram",
-                                                  withSpinner(plotOutput("plotDendrogram"))
                                                 )
+                                                
                                               )
-                                            ),
-                                            tabPanel(
-                                              "LD", value = "ld"
-                                            )
+                                            )#,
+                                            #tabPanel(
+                                            #  "LD", value = "ld"
+                                            #)
                                           )))

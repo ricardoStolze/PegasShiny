@@ -5,8 +5,14 @@ source('UIMainPanel.R')
 ui <- fluidPage(
   #using spinners, till server respondes
   waiter::use_waiter(),
+  
+  shinyFeedback::useShinyFeedback(),
+  tags$style(HTML(".custom-h5 {
+                  color: gray;}
+                  ")),
+  
   # Application title
-  titlePanel("MasterThesis"),
+  titlePanel("ShinyPegas"),
   
   sidebarLayout(
     mySidePanel,

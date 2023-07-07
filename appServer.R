@@ -1,13 +1,25 @@
 server <- function(input, output, session) {
   # Reactives   --------------------------------------------------------------------------
   
-  vcfRInput <- reactive({
+  fileFormatValidate <- reactive({
     req(input$file)
+    ext <- tools::file_ext(input$file$name)
+    if (ext != "vcf"){
+      validate("Invalid File, please upload a .vcf file")
+    }
+    TRUE
+  })
+  
+  vcfRInput <- reactive({
+    #req(input$file)
+    req(fileFormatValidate())
+    
     vcfData <- read.vcfR((input$file)$datapath)
   })
   
   vcfInput <- reactive({
-    vcfData <- vcfR2DNAbin(vcfRInput(), extract.indels = FALSE)
+    vcfData <-
+      vcfR2DNAbin(vcfRInput(), extract.indels = FALSE)#, extract.indels = input$checkboxIndels)
   })
   
   #calculates haplotypes using pegas function 'haplotypes()'
@@ -15,7 +27,8 @@ server <- function(input, output, session) {
     vcfData <- vcfInput()
     haplotypes <-
       pegas::haplotype(vcfData,
-                       locus = 1:ncol(vcfData),
+                       locus = 1:ncol(vcfData),)
+                       #strict = TRUE)
     #sort by haplotype frequencies
     haplotypes <- sort(haplotypes)
     
@@ -130,8 +143,9 @@ server <- function(input, output, session) {
         j <- 2
         while (j <= max) {
           # while full number of bases not reached
+          #browser()
           haplMatrix[, i + 1] <-
-            paste(haplMatrix[, i + 1], haplMatrix[, i + j]) #concatenate two columns
+            paste(haplMatrix[, i + 1], haplMatrix[, i + j], sep = "") #concatenate two columns
           
           j <- j + 1
         }
@@ -167,22 +181,38 @@ server <- function(input, output, session) {
     }
     else if (input$selectNetwork == "4") {
       #MJN
-      browser()
+      #browser()
+      #haplotypes
+      #print.default(haplotypes)
+      
+      colsWithIndels <- del.colgapsonly(haplotypes, freq.only = TRUE)
+      haplotypes <-haplotypes[,-which(colsWithIndels > 0)]
+      
       haplonet <-
-        pegas::mjn(del.colgapsonly(haplotypes, threshold = 10))#, strict = TRUE))#, threshold = 2)
+        pegas::mjn(haplotypes)#, strict = TRUE))#, threshold = 2)
     }
     else if (input$selectNetwork == "5") {
-      #IntNJ
+      #phylogenetischer Baum mit Neighbour Joining Verfahren
       haplonet <- calculateIntNJ()
     }
     else if (input$selectNetwork == "6") {
       #RMST
       haplonet <- rmst(distanceMatrixHamming, quiet = TRUE)
     }
-    
-    updateSliderInput(session = session,
-                      inputId = "sliderTreshold",
+    else if (input$selectNetwork == "7") {
+      haplonet <- mst(distanceMatrixHamming)
+    }
+    #browser()
+    if(is.null(attr(haplonet, "alter.links"))) {
+      updateSliderInput(session = session,
+                        inputId = "sliderThreshold",
+                        max = 0)
+    } else {
+      updateSliderInput(session = session,
+                      inputId = "sliderThreshold",
                       max = max(attr(haplonet, "alter.links")[, 3]))
+    }
+    
     
     haplonet
   })
@@ -343,9 +373,9 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       if (input$radioButtonExportTxtCsv == ".txt") {
-        write.table(calculateHaplotypeTable(), file)
+        write.table(calculateHaplotypeTable(), file, quote = F)
       } else{
-        write.csv(calculateHaplotypeTable(), file)
+        write.csv(calculateHaplotypeTable(), file, file, quote = F)
       }
     }
   )
@@ -360,14 +390,14 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       if (input$radioButtonExportTxtCsv == ".txt") {
-        write.table(haplonet(), file)
-        write.table(attr(haplonet(), "alter.links") , file, append = TRUE)
-        write.table(attr(haplonet(), "labels") , file, append = TRUE)
+        write.table(haplonet(), file, file, quote = F)
+        write.table(attr(haplonet(), "alter.links") , file, append = TRUE, file, quote = F)
+        write.table(attr(haplonet(), "labels") , file, append = TRUE, file, quote = F)
         
       } else{
-        write.csv(haplonet(), file)
-        write.csv(attr(haplonet(), "alter.links") , file, append = TRUE)
-        write.csv(attr(haplonet(), "labels") , file, append = TRUE)
+        write.csv(haplonet(), file, file, quote = F)
+        write.csv(attr(haplonet(), "alter.links") , file, append = TRUE, file, quote = F)
+        write.csv(attr(haplonet(), "labels") , file, append = TRUE, file, quote = F)
       }
     }
   )
@@ -382,9 +412,9 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       if (input$radioButtonExportTxtCsv == ".txt") {
-        write.table(as.matrix(dist.hamming(getHaplotypes())), file)
+        write.table(as.matrix(dist.hamming(getHaplotypes())), file, quote = F)
       } else{
-        write.csv(as.matrix(dist.hamming(getHaplotypes())), file)
+        write.csv(as.matrix(dist.hamming(getHaplotypes())), file, quote = F)
       }
     }
   )
@@ -401,8 +431,13 @@ server <- function(input, output, session) {
         labels <- attr(haplonet(), 'labels')
         sizeNodes = sz[labels]
       }
+      if (input$sliderThreshold == 0){
+        threshold = 0
+      } else {
+        threshold = c(1, input$sliderThreshold)
+      }
       
-      pdf(file)
+      pdf(file, width = input$sizeNetwork / 96, height = input$sizeNetwork / 96)
       
       if (input$selectNetwork == 4 || input$selectNetwork == 5) {
         plot(
@@ -413,7 +448,7 @@ server <- function(input, output, session) {
           scale.ratio = scaleRatio,
           labels = TRUE,
           show.mutation = input$radioButtonEdges,
-          threshold = c(1, input$sliderThreshold)
+          threshold = threshold
         )
       }
       else{
@@ -425,10 +460,54 @@ server <- function(input, output, session) {
           cex = input$sliderLabels,
           size <-
             sizeNodes,
-          threshold = c(1, input$sliderTreshold)
+          threshold = threshold
         )
       }
       dev.off()
+    }
+  )
+  
+  output$buttonExportDendroPDF <- downloadHandler(
+    filename = function() {paste(input$textExportFileName, "_dendrogram.pdf", sep = "")},
+    content = function(file) {
+      
+      pdf(file, width = input$sliderScaleDendrogramX / 96, height = input$sliderScaleDendrogramY / 96)
+      
+      hclust <-
+        hclust(dist.hamming(getHaplotypes()),
+               method = input$radioButtonDendrogram)
+      plot(hclust, hang = -1)
+      dev.off()
+      
+      
+    }
+  )
+  output$buttonExportHeatmapPDF <- downloadHandler(
+    filename = function() {paste(input$textExportFileName, "_heatmap.pdf", sep = "")},
+    content = function(file) {
+      haplotypes <- getHaplotypes()
+      
+      d <- dist.haplotype.loci(haplotypes)
+      distanceMatrix <- dist.hamming(haplotypes)
+      distanceMatrix <- as.matrix(distanceMatrix)
+      if (input$checkboxCluster) {
+        #radioButtonClusterHeatmap
+        pheatmap(
+          distanceMatrix,
+          labels_row = rownames(distanceMatrix),
+          labels_col = colnames(distanceMatrix),
+          clustering_method = input$radioButtonClusterHeatmap
+        )
+      } else{
+        pheatmap(
+          distanceMatrix,
+          labels_row = rownames(distanceMatrix),
+          labels_col = colnames(distanceMatrix),
+          cluster_rows = F,
+          cluster_cols = F
+        )
+      }
+      
     }
   )
   
@@ -585,10 +664,12 @@ server <- function(input, output, session) {
     distanceMatrix <- dist.hamming(haplotypes)
     distanceMatrix <- as.matrix(distanceMatrix)
     if (input$checkboxCluster) {
+      #radioButtonClusterHeatmap
       pheatmap(
         distanceMatrix,
         labels_row = rownames(distanceMatrix),
-        labels_col = colnames(distanceMatrix)
+        labels_col = colnames(distanceMatrix),
+        clustering_method = input$radioButtonClusterHeatmap
       )
     } else{
       pheatmap(
@@ -640,6 +721,7 @@ server <- function(input, output, session) {
   haplonetPlotReactive <- reactive({
     
     req(input$selectNetwork != 1)
+    #req(input$sliderThreshold)
     scaleRatio = 5 / input$sliderScaleNetwork
     sizeNodes = 1
     if (input$checkboxScaleNetwork) {
@@ -647,17 +729,24 @@ server <- function(input, output, session) {
       labels <- attr(haplonet(), 'labels')
       sizeNodes = sz[labels]
     }
+    if (input$sliderThreshold == 0){
+      threshold = 0
+    } else {
+      threshold = c(1, input$sliderThreshold)
+    }
     if (input$selectNetwork == 4 || input$selectNetwork == 5) {
+      haplonet <- haplonet()
+      #browser()
       plot(
-        haplonet(),
+        haplonet,
         shape = c("circles", "circles"),
         cex = input$sliderLabels,
         fast = input$checkboxFastPlotHaplonet,
         scale.ratio = scaleRatio,
         labels = TRUE,
         show.mutation = input$radioButtonEdges,
-        threshold = c(1, input$sliderThreshold)
-      )#, scale.ratio = input$sliderScaleNetwork, treshold = c(1,10))
+        threshold = threshold
+      )#, scale.ratio = input$sliderScaleNetwork, threshold = c(1,10))
       return(NULL)
     }
     plot(
@@ -668,7 +757,7 @@ server <- function(input, output, session) {
       cex = input$sliderLabels,
       size <-
         sizeNodes,
-      threshold = c(1, input$sliderTreshold)
+      threshold = threshold
     )#, size = summary(getHaplotypes()))
     
     
@@ -696,19 +785,23 @@ server <- function(input, output, session) {
   
   # Data Summary-----------------------------------------------------------------------
   
+  output$header <- renderText({
+    vcfRInput()@meta
+  })
+    
   
   output$plotMetadata <-
     DT::renderDataTable(DT::datatable(
       calculateVcfMetadata(),
       options = list(scrollX = TRUE),
-      caption = "VCF Metadata"
+      caption = "VCF Headerdata"
     ))
   
   output$plotVcfData <-
     DT::renderDataTable(DT::datatable(
       t(extract.haps(vcfRInput())),
       options = list(scrollX = TRUE),
-      caption = "VCF Data"
+      caption = "VCF Datalines"
     ))
   
   

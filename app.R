@@ -10,6 +10,8 @@ library(igraph)
 library(shinycssloaders)
 library(shinyBS)
 library(graphics)
+library(shinyFeedback)
+library(tools)
 
 source('appUI.R')
 source('appServer.R')
