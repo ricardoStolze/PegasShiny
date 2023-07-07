@@ -5,6 +5,8 @@ mySidePanel <- sidebarPanel(
     accept = ".vcf",
     buttonLabel = "Browse"
   ),
+  fileInput("fileSubInfo", h4("Select file with additional information"), accept = ".tsv", buttonLabel = "Browse"),
+  
   #checkboxInput("checkboxIndels", "RemoveIndels"),
   conditionalPanel(
     condition = "output.inputSelected",
@@ -134,13 +136,16 @@ mySidePanel <- sidebarPanel(
         
         checkboxInput("checkboxScaleNetwork", "Scale Network Nodes to Frequency"),
         checkboxInput("checkboxFastPlotHaplonet", "Use fast plotting option for haplonet"),
+        conditionalPanel( condition = "output.subInputSelected", checkboxInput("checkboxPieChart", "Add additional Information as pie charts")),
         sliderInput("sizeNetwork", "Size of Network Plot [pixels]", min = 250, max = 1500, value = 750),
         sliderInput("sliderScaleNetwork", "Scale Nodes", min = 1, max = 10, value = 5),
         sliderInput("sliderLabels", "Scale Node Labels", min = 0, max = 2, step = 0.1, value = 0.7),
 
         sliderInput("sliderThreshold", "Threshold for additional Edges", min = 0, max = 10, value = 0),
-        radioButtons("radioButtonEdges", "How to display Edge Weigths", choices = list( "Don't show" = 0, "As lines" = 1, "As Dots" = 2, "As Numbers" = 3), selected = 0),
-        
+        fluidRow(
+        column( 6,radioButtons("radioButtonEdges", "How to display Edge Weigths", choices = list( "Don't show" = 0, "As lines" = 1, "As Dots" = 2, "As Numbers" = 3), selected = 0)),
+        column( 6,radioButtons("colorCircles", "Color of Circles around Graph Knots", choices = list("Black" = "black", "White" = "white", "Grey" = "grey", "Red" = "red", "Blue" = "blue"), selected = "grey"))
+        ),
         hr(),
         checkboxInput("checkboxIGraph", "Display Network as iGraph"),
         checkboxInput("checkboxIGraphAdditionalEdges", "Include additional edges to IGraph"),

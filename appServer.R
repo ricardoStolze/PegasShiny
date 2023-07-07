@@ -69,6 +69,32 @@ server <- function(input, output, session) {
     haplotypes
   })
   
+  getSubInformationAsMatrix <- reactive({
+    req(input$fileSubInfo)
+
+    tsvfile <- as.matrix(read.table(input$fileSubInfo$datapath, header = F, sep="\t", fill = T))
+    # saved values of tsv file. Each column contains information about one individuum, information is defined as 0,1,...,n whereas each number has its own meaning
+    # f.e. 0 can mean individuum is resistant, while 1 means it is not and 2 means no infomation
+    values <- as.integer(unlist(tsvfile[3,]))
+    
+    maxValue <- max(values)
+    #index of haplotypes, each haplotypes has list of index of individuums with haplotype
+    indexList <- attributes(getHaplotypes())$index
+    #matrix to store information for plotting with haplotype knots as pie charts using pegas
+    pieInfoMatrix <- matrix(0, nrow = length(indexList), ncol = maxValue + 1 )
+    colnames(pieInfoMatrix) <- tsvfile[2,1:(maxValue + 1)]
+    counter <- 1
+    for (i in indexList){
+      table <-  table(values[i])
+      for (j in 1 : (maxValue + 1)) {
+        pieInfoMatrix[counter, j] <- if ((j - 1) %in% names(table)) table[names(table) == j - 1] else 0
+      }
+      counter <- counter + 1
+    }
+    pieInfoMatrix
+      
+  })
+  
   getNumberHaplotypesByPercentage <- reactive({
     #browser()
     frequencyAllHaplotypes <- summary(getAllHaplotypes())
@@ -330,6 +356,24 @@ server <- function(input, output, session) {
   })
   outputOptions(output, 'inputSelected', suspendWhenHidden = FALSE)
   
+  output$subInputSelected <- reactive({
+    if (is.null(input$fileSubInfo)) {
+      return (FALSE)
+    } else {
+      return (TRUE)
+    }
+  })
+  outputOptions(output, 'subInputSelected', suspendWhenHidden = FALSE)
+  
+  subInputSelected2 <- reactive({
+    if (is.null(input$fileSubInfo)) {
+      return (FALSE)
+    } else {
+      return (TRUE)
+    }
+  })
+  
+  
   haplonet <- reactiveVal()
   
   
@@ -422,7 +466,9 @@ server <- function(input, output, session) {
   output$buttonExportHaplonetPDF <- downloadHandler(
     filename = function() {paste(input$textExportFileName, "_haplonet.pdf", sep = "")},
     content = function(file) {
-      
+      # pdf(file, width = input$sizeNetwork / 96, height = input$sizeNetwork / 96)
+      # haplonetPlotReactive()  
+      # dev.off()
       req(input$selectNetwork != 1)
       scaleRatio = 5 / input$sliderScaleNetwork
       sizeNodes = 1
@@ -436,29 +482,37 @@ server <- function(input, output, session) {
       } else {
         threshold = c(1, input$sliderThreshold)
       }
-      
+      pieInfo <- if (subInputSelected2()) getSubInformationAsMatrix() else NULL
+
       pdf(file, width = input$sizeNetwork / 96, height = input$sizeNetwork / 96)
-      
+
       if (input$selectNetwork == 4 || input$selectNetwork == 5) {
         plot(
           haplonet(),
+          pie = pieInfo,
+          legend = c(-25,30),
+          col = input$colorCircles,
           shape = c("circles", "circles"),
           cex = input$sliderLabels,
           fast = input$checkboxFastPlotHaplonet,
           scale.ratio = scaleRatio,
           labels = TRUE,
           show.mutation = input$radioButtonEdges,
-          threshold = threshold
+          threshold = threshold,
+          size = sizeNodes
         )
       }
       else{
         plot(
           haplonet(),
+          pie = pieInfo,
+          legend = c(-25,30),
+          col = input$colorCircles,
           scale.ratio = scaleRatio,
           fast = input$checkboxFastPlotHaplonet,
           show.mutation = input$radioButtonEdges,
           cex = input$sliderLabels,
-          size <-
+          size =
             sizeNodes,
           threshold = threshold
         )
@@ -490,6 +544,7 @@ server <- function(input, output, session) {
       d <- dist.haplotype.loci(haplotypes)
       distanceMatrix <- dist.hamming(haplotypes)
       distanceMatrix <- as.matrix(distanceMatrix)
+      pdf(file)
       if (input$checkboxCluster) {
         #radioButtonClusterHeatmap
         pheatmap(
@@ -507,6 +562,7 @@ server <- function(input, output, session) {
           cluster_cols = F
         )
       }
+      dev.off()
       
     }
   )
@@ -734,36 +790,39 @@ server <- function(input, output, session) {
     } else {
       threshold = c(1, input$sliderThreshold)
     }
+    pieInfo <- if (subInputSelected2()) getSubInformationAsMatrix() else NULL
     if (input$selectNetwork == 4 || input$selectNetwork == 5) {
       haplonet <- haplonet()
-      #browser()
       plot(
         haplonet,
+        pie = pieInfo,
+        #legend = c(-25,30),
+        col = input$colorCircles,
         shape = c("circles", "circles"),
         cex = input$sliderLabels,
         fast = input$checkboxFastPlotHaplonet,
         scale.ratio = scaleRatio,
         labels = TRUE,
         show.mutation = input$radioButtonEdges,
-        threshold = threshold
+        threshold = threshold,
+        size = sizeNodes
       )#, scale.ratio = input$sliderScaleNetwork, threshold = c(1,10))
-      return(NULL)
+    } else {
+      plot(
+        haplonet(),
+        pie = pieInfo,
+        col = input$colorCircles,
+        scale.ratio = scaleRatio,
+        fast = input$checkboxFastPlotHaplonet,
+        show.mutation = input$radioButtonEdges,
+        cex = input$sliderLabels,
+        size <-
+          sizeNodes,
+        threshold = threshold,
+        legend = c(0,0)
+        
+      )#, size = summary(getHaplotypes()))
     }
-    plot(
-      haplonet(),
-      scale.ratio = scaleRatio,
-      fast = input$checkboxFastPlotHaplonet,
-      show.mutation = input$radioButtonEdges,
-      cex = input$sliderLabels,
-      size <-
-        sizeNodes,
-      threshold = threshold
-    )#, size = summary(getHaplotypes()))
-    
-    
-    
-    #return(NULL)
-    
     
     #o <- replot()
     #plot(haplonet, bg = "red", labels = FALSE, show.mutation = 2, scale.ratio = input$sliderScaleNetwork)

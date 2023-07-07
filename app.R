@@ -1,5 +1,4 @@
 
-cat("\014")
 
 library(shiny)
 library(vcfR)
