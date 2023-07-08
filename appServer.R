@@ -25,6 +25,7 @@ server <- function(input, output, session) {
   #calculates haplotypes using pegas function 'haplotypes()'
   getAllHaplotypes <- reactive({
     vcfData <- vcfInput()
+    #browser()
     haplotypes <-
       pegas::haplotype(vcfData,
                        locus = 1:ncol(vcfData),)
@@ -213,7 +214,7 @@ server <- function(input, output, session) {
       #print.default(haplotypes)
       
       colsWithIndels <- del.colgapsonly(haplotypes, freq.only = TRUE)
-      haplotypes <-haplotypes[,-which(colsWithIndels > 0)]
+      if (length(which(colsWithIndels > 0)) > 0) haplotypes <-haplotypes[,-which(colsWithIndels > 0)]
       
       haplonet <-
         pegas::mjn(haplotypes)#, strict = TRUE))#, threshold = 2)
@@ -227,7 +228,7 @@ server <- function(input, output, session) {
       haplonet <- rmst(distanceMatrixHamming, quiet = TRUE)
     }
     else if (input$selectNetwork == "7") {
-      haplonet <- mst(distanceMatrixHamming)
+      haplonet <- pegas::mst(distanceMatrixHamming)
     }
     #browser()
     if(is.null(attr(haplonet, "alter.links"))) {
