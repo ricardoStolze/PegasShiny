@@ -140,8 +140,9 @@ server <- function(input, output, session) {
     else {
       val <- input$sliderHaplotypes
     }
+    #browser()
     haplMatrix[, 1] <-
-      rowSums(haploFreq(vcfInput(), haplo = getAllHaplotypes()))[1:val]
+      summary(getAllHaplotypes())[1:val]
     
     #for sliderHaplotypesDuo use
     #frequencies <- as.numeric(rowSums(haploFreq(vcfInput(), haplo = getAllHaplotypes())))
@@ -482,7 +483,7 @@ server <- function(input, output, session) {
       } else {
         threshold = c(1, input$sliderThreshold)
       }
-      pieInfo <- if (subInputSelected2()) getSubInformationAsMatrix() else NULL
+      pieInfo <- if (subInputSelected2() && input$checkboxPieChart) getSubInformationAsMatrix() else NULL
 
       pdf(file, width = input$sizeNetwork / 96, height = input$sizeNetwork / 96)
 
@@ -490,7 +491,7 @@ server <- function(input, output, session) {
         plot(
           haplonet(),
           pie = pieInfo,
-          legend = c(-25,30),
+          #legend = c(-25,30),
           col = input$colorCircles,
           shape = c("circles", "circles"),
           cex = input$sliderLabels,
@@ -790,7 +791,7 @@ server <- function(input, output, session) {
     } else {
       threshold = c(1, input$sliderThreshold)
     }
-    pieInfo <- if (subInputSelected2()) getSubInformationAsMatrix() else NULL
+    pieInfo <- if (subInputSelected2() && input$checkboxPieChart) getSubInformationAsMatrix() else NULL
     if (input$selectNetwork == 4 || input$selectNetwork == 5) {
       haplonet <- haplonet()
       plot(

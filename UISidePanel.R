@@ -136,7 +136,7 @@ mySidePanel <- sidebarPanel(
         
         checkboxInput("checkboxScaleNetwork", "Scale Network Nodes to Frequency"),
         checkboxInput("checkboxFastPlotHaplonet", "Use fast plotting option for haplonet"),
-        conditionalPanel( condition = "output.subInputSelected", checkboxInput("checkboxPieChart", "Add additional Information as pie charts")),
+        conditionalPanel( condition = "output.subInputSelected", checkboxInput("checkboxPieChart", "Add additional Information as pie charts", value = T)),
         sliderInput("sizeNetwork", "Size of Network Plot [pixels]", min = 250, max = 1500, value = 750),
         sliderInput("sliderScaleNetwork", "Scale Nodes", min = 1, max = 10, value = 5),
         sliderInput("sliderLabels", "Scale Node Labels", min = 0, max = 2, step = 0.1, value = 0.7),
