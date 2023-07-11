@@ -70,14 +70,29 @@ server <- function(input, output, session) {
     haplotypes
   })
   
+  #returns ploidy as int (monoploid = 1, diploid = 2,...)
+  getPloidy <- reactive({
+    numberAllSequences <- attributes(vcfInput())$dim[1]
+    numberAllIndividuums <- dim(attributes(vcfRInput())$gt)[2]-1
+    numberAllSequences / numberAllIndividuums
+  })
+  
   getSubInformationAsMatrix <- reactive({
     req(input$fileSubInfo)
-
     tsvfile <- as.matrix(read.table(input$fileSubInfo$datapath, header = F, sep="\t", fill = T))
     # saved values of tsv file. Each column contains information about one individuum, information is defined as 0,1,...,n whereas each number has its own meaning
     # f.e. 0 can mean individuum is resistant, while 1 means it is not and 2 means no infomation
     values <- as.integer(unlist(tsvfile[3,]))
-    
+    ploidy <- getPloidy()
+    if (ploidy > 1) {
+      tmp <- vector(length = 0)
+      for (i in values){
+        for (j in 1 : ploidy) {
+          tmp <- append(tmp, i)
+        }
+      }
+      values <- tmp
+    }
     maxValue <- max(values)
     #index of haplotypes, each haplotypes has list of index of individuums with haplotype
     indexList <- attributes(getHaplotypes())$index
