@@ -217,7 +217,7 @@ server <- function(input, output, session) {
       if (length(which(colsWithIndels > 0)) > 0) haplotypes <-haplotypes[,-which(colsWithIndels > 0)]
       
       haplonet <-
-        pegas::mjn(haplotypes)#, strict = TRUE))#, threshold = 2)
+        pegas::mjn(haplotypes, epsilon = input$mjnEpsilon)#, strict = TRUE))#, threshold = 2)
     }
     else if (input$selectNetwork == "5") {
       #phylogenetischer Baum mit Neighbour Joining Verfahren

@@ -133,6 +133,10 @@ mySidePanel <- sidebarPanel(
         #condition = "input.selectNetwork == '5'", 
         #sliderInput("sliderIntNJAlpha", "Alpha for IntNJ Algorithm", min = 0, max =  1, step=0.1, value = 0)
         #),
+        conditionalPanel(
+          condition = "input.selectNetwork == 4",
+          numericInput("mjnEpsilon", "Set tolerance Parameter for MJN", min = 0, step = 1, value = 0)
+        ),
         
         checkboxInput("checkboxScaleNetwork", "Scale Network Nodes to Frequency"),
         checkboxInput("checkboxFastPlotHaplonet", "Use fast plotting option for haplonet"),
