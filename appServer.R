@@ -25,7 +25,6 @@ server <- function(input, output, session) {
   #calculates haplotypes using pegas function 'haplotypes()'
   getAllHaplotypes <- reactive({
     vcfData <- vcfInput()
-    #browser()
     haplotypes <-
       pegas::haplotype(vcfData,
                        locus = 1:ncol(vcfData),)
@@ -134,7 +133,6 @@ server <- function(input, output, session) {
   #calculates Matrix containig Haplotype sequences
   calculateHaplotypeTable <- reactive({
     req(input$file)
-    #browser()
     haplotypes <-
       getHaplotypes()
     haplMatrix <-
@@ -156,7 +154,6 @@ server <- function(input, output, session) {
     else {
       val <- input$sliderHaplotypes
     }
-    #browser()
     haplMatrix[, 1] <-
       summary(getAllHaplotypes())[1:val]
     
@@ -175,7 +172,7 @@ server <- function(input, output, session) {
     vcfRHapls <- as.matrix(vcfR)
     
     # sometimes "N" is used instead of gap symbols (especially in the last column), so that needs to be replaced
-    haplMatrix[haplMatrix == "N"] <- "-"
+    #haplMatrix[haplMatrix == "N"] <- "-"
     
     for (i in 1:dim(vcfRHapls)[2]) {
       #for every loki
@@ -186,7 +183,6 @@ server <- function(input, output, session) {
         j <- 2
         while (j <= max) {
           # while full number of bases not reached
-          #browser()
           haplMatrix[, i + 1] <-
             paste(haplMatrix[, i + 1], haplMatrix[, i + j], sep = "") #concatenate two columns
           
@@ -224,10 +220,8 @@ server <- function(input, output, session) {
     }
     else if (input$selectNetwork == "4") {
       #MJN
-      #browser()
       #haplotypes
-      #print.default(haplotypes)
-      
+
       colsWithIndels <- del.colgapsonly(haplotypes, freq.only = TRUE)
       if (length(which(colsWithIndels > 0)) > 0) haplotypes <-haplotypes[,-which(colsWithIndels > 0)]
       
@@ -240,12 +234,11 @@ server <- function(input, output, session) {
     }
     else if (input$selectNetwork == "6") {
       #RMST
-      haplonet <- rmst(distanceMatrixHamming, quiet = TRUE)
+      haplonet <- rmst(distanceMatrixHamming,stop.criterion = 2*ceiling(sqrt(length(labels(getHaplotypes())))), quiet = TRUE)
     }
     else if (input$selectNetwork == "7") {
       haplonet <- pegas::mst(distanceMatrixHamming)
     }
-    #browser()
     if(is.null(attr(haplonet, "alter.links"))) {
       updateSliderInput(session = session,
                         inputId = "sliderThreshold",
@@ -434,7 +427,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       if (input$radioButtonExportTxtCsv == ".txt") {
-        write.table(calculateHaplotypeTable(), file, quote = F)
+        write.table(calculateHaplotypeTable(), file, quote = F, sep = "\t")
       } else{
         write.csv(calculateHaplotypeTable(), file, file, quote = F)
       }
@@ -473,7 +466,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       if (input$radioButtonExportTxtCsv == ".txt") {
-        write.table(as.matrix(dist.hamming(getHaplotypes())), file, quote = F)
+        write.table(as.matrix(dist.hamming(getHaplotypes())), file, quote = F, sep = "\t")
       } else{
         write.csv(as.matrix(dist.hamming(getHaplotypes())), file, quote = F)
       }
@@ -500,7 +493,6 @@ server <- function(input, output, session) {
         threshold = c(1, input$sliderThreshold)
       }
       pieInfo <- if (subInputSelected2() && input$checkboxPieChart) getSubInformationAsMatrix() else NULL
-
       pdf(file, width = input$sizeNetwork / 96, height = input$sizeNetwork / 96)
 
       if (input$selectNetwork == 4 || input$selectNetwork == 5) {
@@ -581,6 +573,26 @@ server <- function(input, output, session) {
       }
       dev.off()
       
+    }
+  )
+  
+  output$buttonExportHaplotypeFreqBarPlot <- downloadHandler(
+    filename =  function() {paste(input$textExportFileName, "_haplotypeFrequencyBarPlot.pdf", sep = "")},
+    content = function(file) {
+      values <- if (subInputSelected2()) getSubInformationAsMatrix() else summary(getHaplotypes())
+      #log <- if(input$checkboxBarPlotLog) "y" else ""
+      log = ""
+      #values
+      stack <- if (subInputSelected2()) dim(values)[2] else 1
+      lasVal <- if (length(summary(getHaplotypes())) > 12) 2 else 1
+      
+      pdf(file = file, width = 14)
+      barplot(t(values), legend = T, col = rainbow(stack), names.arg = labels(getHaplotypes()), las = lasVal, log = log)
+      barplot(t(values)[, 2:dim(values)[1]], legend = T, col = rainbow(stack), names.arg = labels(getHaplotypes())[2:length(labels(getHaplotypes()))],las = lasVal, log = log)
+      barplot(t(values)[, 2:3], legend = T, col = rainbow(stack), names.arg = labels(getHaplotypes())[2:3],las = lasVal, log = log)
+      barplot(t(values)[, 4:dim(values)[1]], legend = T, col = rainbow(stack), names.arg = labels(getHaplotypes())[4:length(labels(getHaplotypes()))],las = lasVal, log = log)
+      
+      dev.off()
     }
   )
   
@@ -737,23 +749,106 @@ server <- function(input, output, session) {
     distanceMatrix <- dist.hamming(haplotypes)
     distanceMatrix <- as.matrix(distanceMatrix)
     if (input$checkboxCluster) {
+
       #radioButtonClusterHeatmap
       pheatmap(
         distanceMatrix,
-        labels_row = rownames(distanceMatrix),
-        labels_col = colnames(distanceMatrix),
-        clustering_method = input$radioButtonClusterHeatmap
+        #labels_row = rownames(distanceMatrix),
+        #labels_col = colnames(distanceMatrix),
+        #clustering_method = input$radioButtonClusterHeatmap,
+        cluster_rows = hclust(dist.hamming(getHaplotypes()), method = input$radioButtonClusterHeatmap),
+        #hclust(dist.hamming(getHaplotypes()),method = input$radioButtonDendrogram)
+        cluster_cols = hclust(dist.hamming(getHaplotypes()), method = input$radioButtonClusterHeatmap)
       )
     } else{
       pheatmap(
         distanceMatrix,
-        labels_row = rownames(distanceMatrix),
-        labels_col = colnames(distanceMatrix),
+        #labels_row = rownames(distanceMatrix),
+        #labels_col = colnames(distanceMatrix),
         cluster_rows = F,
         cluster_cols = F
       )
     }
   })
+  
+  output$plotHaplotypeBars <- renderPlot({
+
+    values <- if (subInputSelected2()) getSubInformationAsMatrix() else summary(getHaplotypes())
+    lasVal <- if (length(summary(getHaplotypes())) > 12) 2 else 1 # turning haplotype names by 90°
+    stack <- if (subInputSelected2()) dim(values)[2] else 1
+    #log <- if(input$checkboxBarPlotLog) "y" else ""
+    log = ""
+    barplot(t(values), legend = T, col = rainbow(stack), names.arg = labels(getHaplotypes()),las = lasVal, log = log)
+  })
+  
+  output$tableNetwork <- renderTable({
+    
+    
+    # berechne die werte
+    # nucleotide diversity - measurement of genetic distance between sequences
+    # haplotype diversity - measurement of genetic diversity in a population
+    # branch diversity - measurement of topological diversity in haplotype network
+    # haplotype network branch diversity - measurement of the complexity in a haplotype network
+    #browser()
+    network <- haplonet()
+    hapFreqs <- summary(getHaplotypes())[labels(network)]
+    nucleotideDiversity <- nuc.div(vcfInput())
+    
+    #calculate number of links of network
+    numberLinks <- nrow(network)
+    altLinks <- attr(network, "alter.links")
+    dataFrameAltLinks <- data.frame(altLinks)
+    if (!is.null(altLinks)) numberLinks <- numberLinks + nrow(altLinks)
+    numberLinksShown <- nrow(network)
+    if(!is.null(altLinks)) numberLinksShown <- numberLinksShown + sum(dataFrameAltLinks$step <= input$sliderThreshold)
+    
+    #haplotype diversity - Hd
+    ft <- as.data.frame(hapFreqs)
+    ft$total <- apply(ft,1,sum)
+    sqfreq <- (ft$total/sum(ft$total))^2
+    ft <- cbind(ft, sqfreq = sqfreq)
+    Efh2 <- sum(ft$sqfreq)
+    numberSequences <- sum(hapFreqs)
+    numberIndividuals <- numberSequences / getPloidy()
+    n <- numberSequences
+    Hd <- (1-Efh2)*(n/(n-1)) # formular from paper
+    
+    #BranchDiversity - Bd
+    haplotype_counts <- c(network[,1],attr(network, "alter.links")[,1],network[,2],attr(network, "alter.links")[,2])
+    Hbranches <- aggregate(data.frame(branches = haplotype_counts), list(haplotype = haplotype_counts), length)
+    Hbranches <- cbind(Hbranches, nseq = ft$total)
+    nH <- nrow(Hbranches)
+    Hclasses_temp <- aggregate(Hbranches, list("HC" = Hbranches$branches), sum)
+    Hclasses <- Hclasses_temp[,c(1,4)]
+    names(Hclasses)[2] <- "niHc"
+    nHc <- nrow(Hclasses)
+    Hclasses <- cbind(Hclasses, sqfreq = (Hclasses$'niHc'/n)^2)
+    EfHc2 <- sum(Hclasses$sqfreq)
+    Bd <- (1-EfHc2)*(n/(n-1))
+    
+    #Haplotype Network Branch Diversity - HBd
+    #HBd <- (1 - Efh2) * (1- EfHc2) * (n/(n-1))
+    HBd <- Hd * Bd
+    
+    
+    #hapFreqs <- as.data.frame.matrix(hapFreqs)
+    #hapFreqs$total <- apply(hapFreqs, 1, sum)
+    #hapFreqs <- cbind(hapFreqs, sqfreq = (hapFreqs/sum(hapFreqs$total))^2)
+    #sq
+    #hapFreqs
+    #squareFreqs <- sum(hapFreqs$sqfreq)
+    #browser()
+    #numberIndividuals <- sum(hapFreqs)
+    # verpack sie als matrix 
+    # gib sie aus als tabelle
+    #browser()
+    table <- matrix(c(numberLinks,numberLinksShown, Hd, Bd, HBd), nrow = 5)
+    rownames(table) <- c("Total Number of calculated Links", "Number of Links currently shown", "Haplotype Diversity", "Branch Diversity", "Haplotype Network Branch Diversity")
+    #x <- as.table(table)
+    #colnames(x) <- NULL
+    table
+    #browser()
+  }, colnames = F, rownames = T)
   
   output$plotDistanceMatrixAsMatrix <- renderTable({
     haplotypes <- getHaplotypes()
@@ -808,38 +903,52 @@ server <- function(input, output, session) {
       threshold = c(1, input$sliderThreshold)
     }
     pieInfo <- if (subInputSelected2() && input$checkboxPieChart) getSubInformationAsMatrix() else NULL
-    if (input$selectNetwork == 4 || input$selectNetwork == 5) {
-      haplonet <- haplonet()
-      plot(
-        haplonet,
-        pie = pieInfo,
-        #legend = c(-25,30),
-        col = input$colorCircles,
-        shape = c("circles", "circles"),
-        cex = input$sliderLabels,
-        fast = input$checkboxFastPlotHaplonet,
-        scale.ratio = scaleRatio,
-        labels = TRUE,
-        show.mutation = input$radioButtonEdges,
-        threshold = threshold,
-        size = sizeNodes
-      )#, scale.ratio = input$sliderScaleNetwork, threshold = c(1,10))
-    } else {
-      plot(
-        haplonet(),
-        pie = pieInfo,
-        col = input$colorCircles,
-        scale.ratio = scaleRatio,
-        fast = input$checkboxFastPlotHaplonet,
-        show.mutation = input$radioButtonEdges,
-        cex = input$sliderLabels,
-        size <-
-          sizeNodes,
-        threshold = threshold,
-        legend = c(0,0)
-        
-      )#, size = summary(getHaplotypes()))
+    haplonet <- haplonet()
+    if(!is.null(pieInfo) ){
+      #rMST calculates network with randomized order of haplotypes. 
+      #so if pie info is added, it must be ordered as haplotypes
+      #browser()
+      rownames(pieInfo) <- labels(getHaplotypes())
+      pieInfo <- pieInfo[labels(haplonet),]
     }
+    
+      if (input$selectNetwork == 4 || input$selectNetwork == 5) {
+        
+        #class(haplonet) <- "haploNet"
+        #browser()
+        plot(
+          haplonet,
+          pie = pieInfo,
+          #legend = c(-25,30),
+          #bg = c("red", "blue"),
+          col = input$colorCircles,
+          shape = c("circles", "circles"),
+          cex = input$sliderLabels,
+          fast = input$checkboxFastPlotHaplonet,
+          scale.ratio = scaleRatio,
+          labels = TRUE,
+          show.mutation = input$radioButtonEdges,
+          threshold = threshold,
+          size = sizeNodes
+        )#, scale.ratio = input$sliderScaleNetwork, threshold = c(1,10))
+      } else {
+        plot(
+          haplonet,
+          pie = pieInfo,
+          legend = c(20,10),
+          col = input$colorCircles,
+          scale.ratio = scaleRatio,
+          fast = input$checkboxFastPlotHaplonet,
+          show.mutation = input$radioButtonEdges,
+          cex = input$sliderLabels,
+          size <-
+            sizeNodes,
+          threshold = threshold,
+          
+        )#, size = summary(getHaplotypes()))
+      }
+    
+    
     
     #o <- replot()
     #plot(haplonet, bg = "red", labels = FALSE, show.mutation = 2, scale.ratio = input$sliderScaleNetwork)
@@ -855,6 +964,7 @@ server <- function(input, output, session) {
       input$sizeNetwork,
     res = 96,
     {
+      req(input$checkboxPlotHaplonet)
       haplonetPlotReactive()
     }
   )

@@ -59,27 +59,30 @@ mySidePanel <- sidebarPanel(
       
       textOutput("textPersonPercentage"),
       bsTooltip(id = "textPersonPercentage", title = "Is calculated using the frequency sums shown in the first column of the haplotype table"),
+      checkboxInput("checkboxBarPlot", "Show Haplotype Frequencies as Barplot"),
+      #checkboxInput("checkboxBarPlotLog", "Make Y Axis logarithmic"),
       
       hr(),
       h4("Export"),
       textInput("textExportFileName", "Name of download files"),
       radioButtons("radioButtonExportTxtCsv", "Export as:", choices = list(".txt", ".csv")),
       bsTooltip(id = "textExportFileName", title = "Each File created will get their own attachment to the base file name here, sothat they become distinguishable."),
-      downloadButton("buttonExportHaplotypeTable", "Download Haplotype Table"),
+      downloadButton("buttonExportHaplotypeTable", "Haplotype Table"),
+      downloadButton("buttonExportHaplotypeFreqBarPlot", "Bar Plot"),
       
       conditionalPanel(condition = "input.subTabPanel == 'distanceMatrix'",
-                       downloadButton("buttonExportDistanceMatrix", "Download Distance Matrix"),
+                       downloadButton("buttonExportDistanceMatrix", "Distance Matrix"),
                        conditionalPanel(condition = "input.selectDistanceMatrix == 3",
-                                        downloadButton("buttonExportHeatmapPDF", "Download Heatmap as PDF"),
+                                        downloadButton("buttonExportHeatmapPDF", "Heatmap as PDF"),
                        )
       ),
       conditionalPanel(condition = "input.subTabPanel == 'dendrogram'",
-                       downloadButton("buttonExportDendroPDF", "Download Dendrogram as PDF")),
+                       downloadButton("buttonExportDendroPDF", "Dendrogram as PDF")),
       conditionalPanel(condition = "input.subTabPanel == 'network'",
-                       downloadButton("buttonExportHaplonet", "Download Haplonet"),
+                       downloadButton("buttonExportHaplonet", "Haplonet"),
                        hr(),
-                       downloadButton("buttonExportHaplonetRDS", "Download Haplonet to .RDS"),
-                       downloadButton("buttonExportHaplonetPDF", "Download Haplonet as PDF")
+                       downloadButton("buttonExportHaplonetRDS", "Haplonet to .RDS"),
+                       downloadButton("buttonExportHaplonetPDF", "Haplonet as PDF")
       ),
       
       conditionalPanel(
@@ -140,6 +143,7 @@ mySidePanel <- sidebarPanel(
         
         checkboxInput("checkboxScaleNetwork", "Scale Network Nodes to Frequency"),
         checkboxInput("checkboxFastPlotHaplonet", "Use fast plotting option for haplonet"),
+        checkboxInput("checkboxPlotHaplonet", "Plot Network", value = T),
         conditionalPanel( condition = "output.subInputSelected", checkboxInput("checkboxPieChart", "Add additional Information as pie charts", value = T)),
         sliderInput("sizeNetwork", "Size of Network Plot [pixels]", min = 250, max = 1500, value = 750),
         sliderInput("sliderScaleNetwork", "Scale Nodes", min = 1, max = 10, value = 5),
